@@ -36,10 +36,13 @@ MPI_Send (buf, count, datatype, src, tag, comm, status)
 
 ## Example
 To send an integer x from process 0 to process 1
+(single data, multiple process)
 
 ```C++
 int myrank,msgtag=0; MPI_Status status;
 MPI_Comm_rank(MPI_COMM_WORLD, &myrank); //find rank
+
+// if x was delcared here, the x value would be local to each process and be different
 
 if (myrank == 0) {
   int x;
