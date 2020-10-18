@@ -76,30 +76,30 @@ ONE-TO-ALL BROADCAST COMMUNICATION ROUTINE
 Routine to transfer from the root MPI process the value of
 the 'number' parameter to all other MPI processes in the system.
 */
-void broadcast_scalar(void *number,MPI_Datatype mpi_datatype,int root, 
-   int rank, int numprocs) {
-   MPI_Status status;
+// void broadcast_scalar(void *number,MPI_Datatype mpi_datatype,int root, 
+//    int rank, int numprocs) {
+//    MPI_Status status;
 
-   // root send value of number to each of the other processes
-   // using a locally blocking point-to-point send
-   if (rank==root) {
-      int tag=123;
-      for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
-         if (mpiproc!=root) {
-            MPI_Send(number,1,mpi_datatype,mpiproc,tag,MPI_COMM_WORLD); 
-         }
-      }
-   }
-   // if not root process execute a blocking point-to-point receive
-   // with the source being the root process and direct this data to
-   // the local copy of 'num'
-   else {
-      MPI_Recv(number,1,mpi_datatype,
-               root, MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+//    // root send value of number to each of the other processes
+//    // using a locally blocking point-to-point send
+//    if (rank==root) {
+//       int tag=123;
+//       for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
+//          if (mpiproc!=root) {
+//             MPI_Send(number,1,mpi_datatype,mpiproc,tag,MPI_COMM_WORLD); 
+//          }
+//       }
+//    }
+//    // if not root process execute a blocking point-to-point receive
+//    // with the source being the root process and direct this data to
+//    // the local copy of 'num'
+//    else {
+//       MPI_Recv(number,1,mpi_datatype,
+//                root, MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 
-   }
+//    }
 
-}
+// }
 /*
 Function used by get_parameters routine to prompt the user to 
 interactively enter the next parameter and to return it to the 
@@ -275,37 +275,37 @@ Parameters:
    histogram_size == number of bins in the histogram
    root == MPI rank of the root MPI process
 */
-void reduce(int *histogram, int *histogram_local,int histogram_size, 
-   int root, int rank,int numprocs) {
-   int tag = 123;
-   // if MPI root process perform an element-wise addition of the histograms 
-   // computed on each of the MPI processes. 
-   if (rank==root) {
-      // first initialize root MPI processes' histogram data structure with
-      // the root's locally computed histogram
-      for (int i=0;i<histogram_size;i++) {
-         histogram[i]=histogram_local[i];
-      }
-      // then receive each of the other process' locally computed histogram
-      // and add them element by element to the current histogram
-      MPI_Status status;
-      for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
-         if (mpiproc!=root) {
-            MPI_Recv(histogram_local,histogram_size,MPI_INT,
-            mpiproc,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-            for (int i=0;i<histogram_size;i++) {
-               histogram[i]+=histogram_local[i];
-            }
-         } 
-      }
-   }
-   // if the current MPI process is not the root process then send this
-   // process' local histogram data to the root MPI process
-   else {
-      MPI_Send(histogram_local,histogram_size,MPI_INT, 
-         root, tag, MPI_COMM_WORLD);
-   }
-}
+// void reduce(int *histogram, int *histogram_local,int histogram_size, 
+//    int root, int rank,int numprocs) {
+//    int tag = 123;
+//    // if MPI root process perform an element-wise addition of the histograms 
+//    // computed on each of the MPI processes. 
+//    if (rank==root) {
+//       // first initialize root MPI processes' histogram data structure with
+//       // the root's locally computed histogram
+//       for (int i=0;i<histogram_size;i++) {
+//          histogram[i]=histogram_local[i];
+//       }
+//       // then receive each of the other process' locally computed histogram
+//       // and add them element by element to the current histogram
+//       MPI_Status status;
+//       for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
+//          if (mpiproc!=root) {
+//             MPI_Recv(histogram_local,histogram_size,MPI_INT,
+//             mpiproc,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+//             for (int i=0;i<histogram_size;i++) {
+//                histogram[i]+=histogram_local[i];
+//             }
+//          } 
+//       }
+//    }
+//    // if the current MPI process is not the root process then send this
+//    // process' local histogram data to the root MPI process
+//    else {
+//       MPI_Send(histogram_local,histogram_size,MPI_INT, 
+//          root, tag, MPI_COMM_WORLD);
+//    }
+// }
 
 // MAIN ROUTINE: parallel histogram calculation
 int main(int argc, char *argv[]) {
@@ -423,7 +423,8 @@ int main(int argc, char *argv[]) {
    // obtain final histogram on root MPI process by element-wise
    // summation of each of the local histograms present on each 
    // MPI process
-   reduce(histogram,histogram_local,num_bins,0,rank,numprocs);
+   //reduce(histogram,histogram_local,num_bins,0,rank,numprocs);
+   MPI_Reduce( histogram, histogram_local, num_bins, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
 
    // output sum from root MPI process
    if (rank==0) {
