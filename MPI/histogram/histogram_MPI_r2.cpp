@@ -324,7 +324,6 @@ int iCeil(int x, int y){
     return (x+y - 1)/ y;
 }
 
-
 // MAIN ROUTINE: parallel histogram calculation
 int main(int argc, char *argv[]) {
 
@@ -388,6 +387,7 @@ int main(int argc, char *argv[]) {
    // dynamically allocate from heap the numbers_local array on each
    // of the MPI Processes
    const int numbers_local_array_sz = iCeil(list_size, numprocs); // try writing own iCeil
+   cout << "Local numbers array size: " << numbers_local_array_sz << endl;
    double *numbers_local;
    try {
       numbers_local = new double[numbers_local_array_sz];
@@ -422,10 +422,10 @@ int main(int argc, char *argv[]) {
    int offset = 0;
    for (int i=0; i<numprocs; ++i) {
 	if (rank < (list_size % numprocs)){
-	    sendcounts[i] = iCeil(list_size, numprocs);
+	         sendcounts[i] = iCeil(list_size, numprocs);
             offset += sendcounts[i];
         } else {
-	    sendcounts[i] = list_size/numprocs;
+	         sendcounts[i] = list_size/numprocs;
             offset += sendcounts[i];
         }
         displs[i] = offset; 
@@ -438,7 +438,7 @@ int main(int argc, char *argv[]) {
 
    // local list size for MPI process -- 
    //   set for ideal case (perfect load balance)
-   const int local_list_size = ceil(list_size/numprocs); // set for ideal case 
+   const int local_list_size = iCeil(list_size, numprocs); // set for ideal case 
 
    // clear out local histogram array, histogram_local
    for (int i=0;i<num_bins;i++) histogram_local[i]=0.0f;
