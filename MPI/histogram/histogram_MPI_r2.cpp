@@ -211,6 +211,13 @@ void print_matrix(double *numbers,int list_size)
    }
 }
 
+// Routine that outputs the numbers matrix to the screen 
+void print_int_matrix(int *numbers,int list_size)
+{
+   for(int i=0;i<list_size;i++) {
+      cout << numbers[i] << endl;
+   }
+}
 
 /* ONE-TO-ALL SCATTER ROUTINE
 Routine to divide and scatter the number data array that resides on the
@@ -226,7 +233,13 @@ void scatter(double *numbers,double *group,int num_size, int root, int rank,int 
    
    // determine number of elements in subarray groups to be processed by
    // each MPI process assuming a perfectly even distribution of elements 
-   const int number_elements_per_section = num_size/numprocs;
+   int number_elements_per_section;
+   if(ceil((num_size / numprocs) * (rank+1)) <= num_size)
+      number_elements_per_section = ceil(num_size/numprocs);
+   else if ((ceil(num_size/numprocs) * rank) < num_size)
+      number_elements_per_section = num_size - (ceil(num_size / numprocs) * rank);
+   else
+      number_elements_per_section = 0;
 
    // if root MPI process send portion of numbers array to each of the
    // the other MPI processes as well as make a copy of the portion
@@ -307,6 +320,11 @@ Parameters:
 //    }
 // }
 
+int iCeil(int x, int y){
+    return (x+y - 1)/ y;
+}
+
+
 // MAIN ROUTINE: parallel histogram calculation
 int main(int argc, char *argv[]) {
 
@@ -346,8 +364,9 @@ int main(int argc, char *argv[]) {
 
       // dynamically allocate from heap the numbers array on the root process
       try {
-         const int total_size = ceil(list_size/numprocs)*numprocs;
+         const int total_size = iCeil(list_size, numprocs)*numprocs; // try creating own ceil function iCeil
          numbers = new double[total_size];
+         cout << "Total Size: " << total_size << endl;
       }
       catch (exception& err) { 
          cout << err.what() << " on Rank=0 MPI Process for numbers "
@@ -368,7 +387,7 @@ int main(int argc, char *argv[]) {
 
    // dynamically allocate from heap the numbers_local array on each
    // of the MPI Processes
-   const int numbers_local_array_sz = ceil(list_size/numprocs); 
+   const int numbers_local_array_sz = iCeil(list_size, numprocs); // try writing own iCeil
    double *numbers_local;
    try {
       numbers_local = new double[numbers_local_array_sz];
@@ -393,20 +412,33 @@ int main(int argc, char *argv[]) {
 
    // scatter the numbers array to all MPI processes in
    // the system
-   scatter(numbers,numbers_local,list_size,0,rank,numprocs);
+   //scatter(numbers,numbers_local,list_size,0,rank,numprocs);
    //MPI_Scatterv(sbuf, scounts, displs, stype, rbuf, rcount, rtype, root, comm);
 
-   // int *sendcounts = new int[numprocs];
-   // int *disp = new int[numprocs];
+   int *sendcounts = new int[numprocs];
+   int *displs = new int[numprocs];
    
-   // MPI_Scatterv(numbers, sendcounts, disp, MPI_DOUBLE, histogram_local, numbers_local_array_sz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+   // calculate send counts and displacements
+   int offset = 0;
+   for (int i=0; i<numprocs; ++i) {
+	if (rank < (list_size % numprocs)){
+	    sendcounts[i] = iCeil(list_size, numprocs);
+            offset += sendcounts[i];
+        } else {
+	    sendcounts[i] = list_size/numprocs;
+            offset += sendcounts[i];
+        }
+        displs[i] = offset; 
+    }
+   
+   MPI_Scatterv(numbers, sendcounts, displs, MPI_DOUBLE, histogram_local, numbers_local_array_sz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
    // create local histogram of the set of numbers associated 
    // with the current MPI process
 
    // local list size for MPI process -- 
    //   set for ideal case (perfect load balance)
-   const int local_list_size = list_size/numprocs; // set for ideal case 
+   const int local_list_size = ceil(list_size/numprocs); // set for ideal case 
 
    // clear out local histogram array, histogram_local
    for (int i=0;i<num_bins;i++) histogram_local[i]=0.0f;
@@ -420,11 +452,16 @@ int main(int argc, char *argv[]) {
          histogram_local[(int) (num/bin_range)]++;
       }
    }
+
+   // cout << "=========LOCAL HISTOGRAM ON RANK " << rank << " =========" << endl;
+   // print_int_matrix(histogram_local,num_bins);
+   // cout << "=============================================" << endl << flush;
+
    // obtain final histogram on root MPI process by element-wise
    // summation of each of the local histograms present on each 
    // MPI process
    //reduce(histogram,histogram_local,num_bins,0,rank,numprocs);
-   MPI_Reduce( histogram, histogram_local, num_bins, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+   MPI_Reduce( histogram, histogram_local, num_bins, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
    // output sum from root MPI process
    if (rank==0) {
