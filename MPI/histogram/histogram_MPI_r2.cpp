@@ -198,7 +198,8 @@ void create_list(double *numbers,int list_size) {
    std::default_random_engine generator(123546);
    std::normal_distribution<double> distribution(MEAN,STDEV);
 
-   for(int i=0;i<list_size;i++) {
+   int i = 0;
+   for(i=0;i<list_size;i++) {
       numbers[i]=distribution(generator);
    }
 }
@@ -288,37 +289,37 @@ Parameters:
    histogram_size == number of bins in the histogram
    root == MPI rank of the root MPI process
 */
-// void reduce(int *histogram, int *histogram_local,int histogram_size, 
-//    int root, int rank,int numprocs) {
-//    int tag = 123;
-//    // if MPI root process perform an element-wise addition of the histograms 
-//    // computed on each of the MPI processes. 
-//    if (rank==root) {
-//       // first initialize root MPI processes' histogram data structure with
-//       // the root's locally computed histogram
-//       for (int i=0;i<histogram_size;i++) {
-//          histogram[i]=histogram_local[i];
-//       }
-//       // then receive each of the other process' locally computed histogram
-//       // and add them element by element to the current histogram
-//       MPI_Status status;
-//       for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
-//          if (mpiproc!=root) {
-//             MPI_Recv(histogram_local,histogram_size,MPI_INT,
-//             mpiproc,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-//             for (int i=0;i<histogram_size;i++) {
-//                histogram[i]+=histogram_local[i];
-//             }
-//          } 
-//       }
-//    }
-//    // if the current MPI process is not the root process then send this
-//    // process' local histogram data to the root MPI process
-//    else {
-//       MPI_Send(histogram_local,histogram_size,MPI_INT, 
-//          root, tag, MPI_COMM_WORLD);
-//    }
-// }
+void reduce(int *histogram, int *histogram_local,int histogram_size, 
+   int root, int rank,int numprocs) {
+   int tag = 123;
+   // if MPI root process perform an element-wise addition of the histograms 
+   // computed on each of the MPI processes. 
+   if (rank==root) {
+      // first initialize root MPI processes' histogram data structure with
+      // the root's locally computed histogram
+      for (int i=0;i<histogram_size;i++) {
+         histogram[i]=histogram_local[i];
+      }
+      // then receive each of the other process' locally computed histogram
+      // and add them element by element to the current histogram
+      MPI_Status status;
+      for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
+         if (mpiproc!=root) {
+            MPI_Recv(histogram_local,histogram_size,MPI_INT,
+            mpiproc,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+            for (int i=0;i<histogram_size;i++) {
+               histogram[i]+=histogram_local[i];
+            }
+         } 
+      }
+   }
+   // if the current MPI process is not the root process then send this
+   // process' local histogram data to the root MPI process
+   else {
+      MPI_Send(histogram_local,histogram_size,MPI_INT, 
+         root, tag, MPI_COMM_WORLD);
+   }
+}
 
 int iCeil(int x, int y){
     return (x+y - 1)/ y;
@@ -336,8 +337,9 @@ int main(int argc, char *argv[]) {
    //get run time parameters from the user
    // list_size == number of numbers to generate on root node
    // num_bins  == number of equally-spaced bins for the histogram
+   // total_size == number of total list size to compensate for extra #s
    // value range (max_val,min_val) that is being recorded in the histogram
-   int list_size, num_bins;
+   int list_size, num_bins, total_size;
    double max_val, min_val;
    bool print_flg=true; // default is to print numbers out to screen
 
@@ -363,7 +365,7 @@ int main(int argc, char *argv[]) {
 
       // dynamically allocate from heap the numbers array on the root process
       try {
-         const int total_size = iCeil(list_size, numprocs)*numprocs; // try creating own ceil function iCeil
+         total_size = iCeil(list_size, numprocs)*numprocs; // try creating own ceil function iCeil
          numbers = new double[total_size];
          cout << "Total Size: " << total_size << endl;
       }
@@ -387,7 +389,6 @@ int main(int argc, char *argv[]) {
    // dynamically allocate from heap the numbers_local array on each
    // of the MPI Processes
    const int numbers_local_array_sz = iCeil(list_size, numprocs); // try writing own iCeil
-   cout << "Local numbers array size: " << numbers_local_array_sz << endl;
    double *numbers_local;
    try {
       numbers_local = new double[numbers_local_array_sz];
@@ -410,35 +411,47 @@ int main(int argc, char *argv[]) {
       MPI_Abort(MPI_COMM_WORLD,1); // abort the MPI Environment
    }
 
-   // scatter the numbers array to all MPI processes in
-   // the system
-   //scatter(numbers,numbers_local,list_size,0,rank,numprocs);
-   //MPI_Scatterv(sbuf, scounts, displs, stype, rbuf, rcount, rtype, root, comm);
+   printf("\nMade it here\n");
+   // Declare the displacements (pointer to start of count)
+   int *start_points = new int[numprocs];
 
-   int *sendcounts = new int[numprocs];
-   int *displs = new int[numprocs];
-   
-   // calculate send counts and displacements
-   int offset = 0;
-   for (int i=0; i<numprocs; ++i) {
-	if (rank < (list_size % numprocs)){
-	         sendcounts[i] = iCeil(list_size, numprocs);
-            offset += sendcounts[i];
-        } else {
-	         sendcounts[i] = list_size/numprocs;
-            offset += sendcounts[i];
+    // Declare the counts (number of items to be sent)
+    int *counts = new int[numprocs];
+
+      if (rank == 0){
+         start_points[0] = 0;
+         int start_result = 0;
+         int result = 0;
+         for (int i=0; i<numprocs; i++){
+
+            result = 0;
+            if (rank < (list_size % numprocs)){
+                  result = iCeil(list_size, numprocs);
+                  counts[i] = result;
+            } else {
+                  result = list_size/numprocs;
+                  counts[i] = result;
+            }
+            if(i > 0) {
+                  start_result += result;
+                  start_points[i] = start_result;
+            }
+
+            printf("counts[ %d ] = %d, start_points[ %d ] = %d \n", i, counts[i], i, start_points[i]);
         }
-        displs[i] = offset; 
-    }
+     }
    
-   MPI_Scatterv(numbers, sendcounts, displs, MPI_DOUBLE, histogram_local, numbers_local_array_sz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+   //MPI_Scatterv(numbers, sendcounts, displs, MPI_DOUBLE, histogram_local, numbers_local_array_sz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+   //MPI_Scatter(numbers, sendcount, MPI_DOUBLE, numbers_local, sendcount[i], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+   MPI_Scatterv(numbers, &counts[rank], &start_points[rank], MPI_DOUBLE, numbers_local, counts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+   cout << "SAYING HELLO FROM RANK: " << rank << endl << flush;
 
    // create local histogram of the set of numbers associated 
    // with the current MPI process
 
    // local list size for MPI process -- 
-   //   set for ideal case (perfect load balance)
-   const int local_list_size = iCeil(list_size, numprocs); // set for ideal case 
+   const int local_list_size = iCeil(list_size, numprocs);
 
    // clear out local histogram array, histogram_local
    for (int i=0;i<num_bins;i++) histogram_local[i]=0.0f;
@@ -453,15 +466,11 @@ int main(int argc, char *argv[]) {
       }
    }
 
-   // cout << "=========LOCAL HISTOGRAM ON RANK " << rank << " =========" << endl;
-   // print_int_matrix(histogram_local,num_bins);
-   // cout << "=============================================" << endl << flush;
-
    // obtain final histogram on root MPI process by element-wise
    // summation of each of the local histograms present on each 
    // MPI process
-   //reduce(histogram,histogram_local,num_bins,0,rank,numprocs);
-   MPI_Reduce( histogram, histogram_local, num_bins, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+   reduce(histogram,histogram_local,num_bins,0,rank,numprocs);
+   //MPI_Reduce(histogram,histogram_local,num_bins,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 
    // output sum from root MPI process
    if (rank==0) {
