@@ -227,51 +227,51 @@ The number data size is given by the'num_size' parameter its source
 address is given by the '*numbers' parameter, and the destination
 group data associated with the current process is given by the
 '*group' parameter.  */
-void scatter(double *numbers,double *group,int num_size, int root, int rank,int numprocs)
-{
-   MPI_Status status;
-   int tag = 234;
+// void scatter(double *numbers,double *group,int num_size, int root, int rank,int numprocs)
+// {
+//    MPI_Status status;
+//    int tag = 234;
    
-   // determine number of elements in subarray groups to be processed by
-   // each MPI process assuming a perfectly even distribution of elements 
-   int number_elements_per_section;
-   if(ceil((num_size / numprocs) * (rank+1)) <= num_size)
-      number_elements_per_section = ceil(num_size/numprocs);
-   else if ((ceil(num_size/numprocs) * rank) < num_size)
-      number_elements_per_section = num_size - (ceil(num_size / numprocs) * rank);
-   else
-      number_elements_per_section = 0;
+//    // determine number of elements in subarray groups to be processed by
+//    // each MPI process assuming a perfectly even distribution of elements 
+//    int number_elements_per_section;
+//    if(ceil((num_size / numprocs) * (rank+1)) <= num_size)
+//       number_elements_per_section = ceil(num_size/numprocs);
+//    else if ((ceil(num_size/numprocs) * rank) < num_size)
+//       number_elements_per_section = num_size - (ceil(num_size / numprocs) * rank);
+//    else
+//       number_elements_per_section = 0;
 
-   // if root MPI process send portion of numbers array to each of the
-   // the other MPI processes as well as make a copy of the portion
-   // of the numbers array that is slated for the root MPI process
-   if (rank==root) {
-      int begin_element=0;
+//    // if root MPI process send portion of numbers array to each of the
+//    // the other MPI processes as well as make a copy of the portion
+//    // of the numbers array that is slated for the root MPI process
+//    if (rank==root) {
+//       int begin_element=0;
 
-      for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
+//       for(int mpiproc=0;mpiproc<numprocs;mpiproc++) {
       
-         // in MPI root process case just copy the appropriate subsection
-         // locally from the numbers array over to the group array
-         if (mpiproc==root) {
-            for (int i=0;i<number_elements_per_section;i++) 
-               group[i]=numbers[i+begin_element];
-         }
-         // if not the root process send the subsection data to
-         // the next MPI process
-         else {
-            MPI_Send(&numbers[begin_element],number_elements_per_section,
-               MPI_DOUBLE,mpiproc,tag,MPI_COMM_WORLD);
-         }
-         // point to next unsent or uncopied data in numbers array
-         begin_element += number_elements_per_section;
-      }
-   }
-   // if a non root process just receive the data
-   else {
-      MPI_Recv(group,number_elements_per_section,MPI_DOUBLE,
-               root,MPI_ANY_TAG,MPI_COMM_WORLD,&status);  
-   }
-}
+//          // in MPI root process case just copy the appropriate subsection
+//          // locally from the numbers array over to the group array
+//          if (mpiproc==root) {
+//             for (int i=0;i<number_elements_per_section;i++) 
+//                group[i]=numbers[i+begin_element];
+//          }
+//          // if not the root process send the subsection data to
+//          // the next MPI process
+//          else {
+//             MPI_Send(&numbers[begin_element],number_elements_per_section,
+//                MPI_DOUBLE,mpiproc,tag,MPI_COMM_WORLD);
+//          }
+//          // point to next unsent or uncopied data in numbers array
+//          begin_element += number_elements_per_section;
+//       }
+//    }
+//    // if a non root process just receive the data
+//    else {
+//       MPI_Recv(group,number_elements_per_section,MPI_DOUBLE,
+//                root,MPI_ANY_TAG,MPI_COMM_WORLD,&status);  
+//    }
+// }
 /*
 ALL-TO-ONE Reduce ROUTINE
 Routine to communicate the local histograms that are present on each
@@ -411,38 +411,35 @@ int main(int argc, char *argv[]) {
       MPI_Abort(MPI_COMM_WORLD,1); // abort the MPI Environment
    }
 
-   printf("\nMade it here\n");
    // Declare the displacements (pointer to start of count)
    int *start_points = new int[numprocs];
 
-    // Declare the counts (number of items to be sent)
-    int *counts = new int[numprocs];
+   // Declare the counts (number of items to be sent)
+   int *counts = new int[numprocs];
 
-      if (rank == 0){
-         start_points[0] = 0;
-         int start_result = 0;
-         int result = 0;
-         for (int i=0; i<numprocs; i++){
+   if (rank == 0){
+      start_points[0] = 0;
+      int start_result = 0;
+      int result = 0;
+      for (int i=0; i<numprocs; i++){
 
-            result = 0;
-            if (rank < (list_size % numprocs)){
-                  result = iCeil(list_size, numprocs);
-                  counts[i] = result;
-            } else {
-                  result = list_size/numprocs;
-                  counts[i] = result;
-            }
-            if(i > 0) {
-                  start_result += result;
-                  start_points[i] = start_result;
-            }
+         result = 0;
+         if (rank < (list_size % numprocs)){
+               result = iCeil(list_size, numprocs);
+               counts[i] = result;
+         } else {
+               result = list_size/numprocs;
+               counts[i] = result;
+         }
+         if(i > 0) {
+               start_result += result;
+               start_points[i] = start_result;
+         }
 
-            printf("counts[ %d ] = %d, start_points[ %d ] = %d \n", i, counts[i], i, start_points[i]);
-        }
-     }
+         // printf("counts[ %d ] = %d, start_points[ %d ] = %d \n", i, counts[i], i, start_points[i]);
+      }
+   }
    
-   //MPI_Scatterv(numbers, sendcounts, displs, MPI_DOUBLE, histogram_local, numbers_local_array_sz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-   //MPI_Scatter(numbers, sendcount, MPI_DOUBLE, numbers_local, sendcount[i], MPI_DOUBLE, 0, MPI_COMM_WORLD);
    MPI_Scatterv(numbers, &counts[rank], &start_points[rank], MPI_DOUBLE, numbers_local, counts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
    cout << "SAYING HELLO FROM RANK: " << rank << endl << flush;
