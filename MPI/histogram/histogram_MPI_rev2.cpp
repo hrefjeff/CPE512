@@ -367,7 +367,7 @@ int main(int argc, char *argv[]) {
       try {
          total_size = iCeil(list_size, numprocs)*numprocs; // try creating own ceil function iCeil
          numbers = new double[total_size];
-         cout << "Total Size: " << total_size << endl;
+         // cout << "Total Size: " << total_size << endl;
       }
       catch (exception& err) { 
          cout << err.what() << " on Rank=0 MPI Process for numbers "
@@ -442,7 +442,7 @@ int main(int argc, char *argv[]) {
    
    MPI_Scatterv(numbers, &counts[rank], &start_points[rank], MPI_DOUBLE, numbers_local, counts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-   cout << "SAYING HELLO FROM RANK: " << rank << endl << flush;
+   // cout << "SAYING HELLO FROM RANK: " << rank << endl << flush;
 
    // create local histogram of the set of numbers associated 
    // with the current MPI process
@@ -457,7 +457,7 @@ int main(int argc, char *argv[]) {
    for (int i=0;i<local_list_size;i++) {
       double num;
       num = numbers_local[i];
-      if (num>=min_val && num < max_val) {
+      if ((num >= min_val) && (num < max_val)) {
          num -= min_val;
          histogram_local[(int) (num/bin_range)]++;
       }
@@ -467,7 +467,7 @@ int main(int argc, char *argv[]) {
    // summation of each of the local histograms present on each 
    // MPI process
    reduce(histogram,histogram_local,num_bins,0,rank,numprocs);
-   //MPI_Reduce(histogram,histogram_local,num_bins,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
+   //MPI_Reduce(histogram,histogram_local,counts[rank],MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 
    // output sum from root MPI process
    if (rank==0) {
