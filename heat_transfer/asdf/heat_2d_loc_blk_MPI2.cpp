@@ -89,11 +89,6 @@ void init_temp(void) {
         }
     }
 }
-
-int iCeil(int x, int y){
-    return (x+y - 1)/ y;
-}
-
 // main compute/communication region -- allows for temperature diffusion 
 // to occur one iteration at a time until the specified number of 
 // iterations has been performed
@@ -108,60 +103,42 @@ void compute_temp() {
     #define Temp_buf(x,y) temp_buf[(x)*total_cols+y] // *(temp_buf+x*total_cols+y)
     double *temp_buf = new double[total_rows_on_proc*total_cols];
 
+
     // communication phase using Blocking Receives
-    // std::cout << "Numprocs/CurrRank(up,low) : " << numprocs << "/" << rank << " ( " << up_pr << "," << down_pr << ")" << std::endl;
 
     // to be replaced with other communication methods in Part 1 and Part 2
     // Begin of communication phase
     for (int i=0;i<num_iterations;i++) {
         if (rank%2==0) { // even numbered processes
-
-            // From Lecture 10/13/2020 of 1-D Explanation (58:32)
-            // Abstracted idea where the targeted processes that are outside
-            // of the communication range will not occur
-
-            if ( down_pr > numprocs-1 ) {
-                // std::cout << "Hello from proc: " << rank << ". I won't be doing anything." << std::endl;
-            } else {
-                // std::cout << "Proc " << rank << " sending to " << down_pr << std::endl;
-                MPI::COMM_WORLD.Send(&temp[active_rows_on_proc*total_cols],total_cols, MPI::DOUBLE,down_pr,123);
-                //MPI::COMM_WORLD.Recv(&temp[ send my point to other proc ghost point ], right most, ...)
-                MPI::COMM_WORLD.Recv(&temp[(active_rows_on_proc+1)*total_cols],total_cols,MPI::DOUBLE,down_pr,MPI_ANY_TAG,status);
-                //MPI::COMM_WORLD.Recv(&temp[ receive other point for this proc ghost point ], right most, ...)
+            if ( rank < numprocs ) {
+                MPI::COMM_WORLD.Send(&temp[active_rows_on_proc*total_cols], total_cols, MPI::DOUBLE, down_pr, 123);
+              //MPI::COMM_WORLD.Recv(&temp[ other procs ghost point      ], right most, ...)
+                MPI::COMM_WORLD.Recv(&temp[(active_rows_on_proc+1)*total_cols], total_cols, MPI::DOUBLE, down_pr, MPI_ANY_TAG, status);
+              //MPI::COMM_WORLD.Recv(&temp[               ghost point        ], right most, ...)
+                if (rank>0) {
+                    MPI::COMM_WORLD.Send(&temp[total_cols],total_cols,MPI::DOUBLE, up_pr,123);
+                    MPI::COMM_WORLD.Recv(&temp[0],total_cols,MPI::DOUBLE,up_pr, MPI_ANY_TAG,status);
+                }
             }
-            
-            if (rank>0) {
-                MPI::COMM_WORLD.Send(&temp[total_cols],total_cols,MPI::DOUBLE, up_pr,123);
-                MPI::COMM_WORLD.Recv(&temp[0],total_cols,MPI::DOUBLE,up_pr,MPI_ANY_TAG,status);
+        }
+        else { // odd numbered processes
+            if ( rank < numprocs ) { // If i'm greater than number of procs, don't occur (inverted logic)
+                MPI::COMM_WORLD.Recv(&temp[0], total_cols, MPI::DOUBLE, up_pr, MPI_ANY_TAG,status);
+                MPI::COMM_WORLD.Send(&temp[total_cols], total_cols, MPI::DOUBLE, up_pr, 123);
+                if (rank < numprocs-1) {
+                    MPI::COMM_WORLD.Recv(&temp[(active_rows_on_proc+1)*total_cols],
+                            total_cols,MPI::DOUBLE,down_pr, MPI_ANY_TAG,status);
+                    MPI::COMM_WORLD.Send(&temp[active_rows_on_proc*total_cols],
+                            total_cols,MPI::DOUBLE,down_pr, 123);
+                }
             }
-        
-        } else { // odd numbered processes
-
-            // From Lecture 10/13/2020 of 1-D Explanation (58:32)
-            // Abstracted idea where the targeted processes that are outside
-            // of the communication range will not occur
-
-            if ( up_pr < 0 ) {
-                // std::cout << "Hello from proc: " << rank << ". I won't be doing anything." << std::endl;
-            } else {
-                // std::cout << "Proc " << rank << " recv from " << up_pr << std::endl;
-	            MPI::COMM_WORLD.Recv(&temp[0],total_cols,MPI::DOUBLE,up_pr, MPI_ANY_TAG,status);
-            	MPI::COMM_WORLD.Send(&temp[total_cols],total_cols,MPI::DOUBLE, up_pr,123);
-            }
-
-            if (rank < numprocs-1) {
-                MPI::COMM_WORLD.Recv(&temp[(active_rows_on_proc+1)*total_cols],total_cols,MPI::DOUBLE,down_pr, MPI_ANY_TAG,status);
-                MPI::COMM_WORLD.Send(&temp[active_rows_on_proc*total_cols],total_cols,MPI::DOUBLE,down_pr, 123);
-            }
-
         }
         // End of communication phase
 
         // local stenciled computation phase 
         for (int j=1;j<=active_rows_on_proc;j++) {
             for (int k=1;k<=total_cols-2;k++) {
-                Temp_buf(j,k)=0.25*(Temp(j-1,k)+Temp(j+1,k)+
-                        Temp(j,k-1)+Temp(j,k+1));
+                Temp_buf(j,k) = 0.25 * ( Temp(j-1,k) + Temp(j+1,k) + Temp(j,k-1) + Temp(j,k+1) );
             }
         }
         for (int j=1;j<=active_rows_on_proc;j++) {
@@ -181,8 +158,7 @@ void print_temp(void) {
     // wait for turn to print out local temp array 
     if (rank!=0) {
         // if not rank 0 wait until adjacent left process has completed
-        MPI::COMM_WORLD.Recv(&flg,1,MPI::CHAR,up_pr,MPI_ANY_TAG,
-           status);
+        MPI::COMM_WORLD.Recv(&flg,1,MPI::CHAR,up_pr,MPI_ANY_TAG,status);
     }
     else {
         // if rank 0 then go ahead and print header and the upper
@@ -289,9 +265,9 @@ unsigned long long int checksum(void) {
     return sum;
 }
 int main (int argc, char *argv[]){
-   MPI::Init(argc,argv); // Initalize MPI environment
-   rank= MPI::COMM_WORLD.Get_rank(); // get process identity number
-   numprocs=MPI::COMM_WORLD.Get_size(); //get total number of processes
+    MPI::Init(argc,argv); // Initalize MPI environment
+    rank= MPI::COMM_WORLD.Get_rank(); // get process identity number
+    numprocs=MPI::COMM_WORLD.Get_size(); //get total number of processes
 
     if (argc!=3 && argc!=4) {
         if (rank==0) {
@@ -326,7 +302,7 @@ int main (int argc, char *argv[]){
 
     // define the number of rows that the MPI process
     // is to process 
-    active_rows_on_proc = iCeil(n,numprocs);
+    active_rows_on_proc = n/numprocs;
 
     // set total rows per MPI process including boundary 
     // points
