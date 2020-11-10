@@ -124,14 +124,14 @@ void compute_temp() {
                 // std::cout << "Hello from proc: " << rank << ". I won't be doing anything." << std::endl;
             } else {
                 // std::cout << "Proc " << rank << " sending to " << down_pr << std::endl;
-                MPI::COMM_WORLD.Send(&temp[active_rows_on_proc*total_cols],total_cols, MPI::DOUBLE,down_pr,123);
+                MPI::COMM_WORLD.Ssend(&temp[active_rows_on_proc*total_cols],total_cols, MPI::DOUBLE,down_pr,123);
                 //MPI::COMM_WORLD.Recv(&temp[ send my point to other proc ghost point ], right most, ...)
                 MPI::COMM_WORLD.Recv(&temp[(active_rows_on_proc+1)*total_cols],total_cols,MPI::DOUBLE,down_pr,MPI_ANY_TAG,status);
                 //MPI::COMM_WORLD.Recv(&temp[ receive other point for this proc ghost point ], right most, ...)
             }
             
             if (rank>0) {
-                MPI::COMM_WORLD.Send(&temp[total_cols],total_cols,MPI::DOUBLE, up_pr,123);
+                MPI::COMM_WORLD.Ssend(&temp[total_cols],total_cols,MPI::DOUBLE, up_pr,123);
                 MPI::COMM_WORLD.Recv(&temp[0],total_cols,MPI::DOUBLE,up_pr,MPI_ANY_TAG,status);
             }
         
@@ -146,12 +146,12 @@ void compute_temp() {
             } else {
                 // std::cout << "Proc " << rank << " recv from " << up_pr << std::endl;
 	            MPI::COMM_WORLD.Recv(&temp[0],total_cols,MPI::DOUBLE,up_pr, MPI_ANY_TAG,status);
-            	MPI::COMM_WORLD.Send(&temp[total_cols],total_cols,MPI::DOUBLE, up_pr,123);
+            	MPI::COMM_WORLD.Ssend(&temp[total_cols],total_cols,MPI::DOUBLE, up_pr,123);
             }
 
             if (rank < numprocs-1) {
                 MPI::COMM_WORLD.Recv(&temp[(active_rows_on_proc+1)*total_cols],total_cols,MPI::DOUBLE,down_pr, MPI_ANY_TAG,status);
-                MPI::COMM_WORLD.Send(&temp[active_rows_on_proc*total_cols],total_cols,MPI::DOUBLE,down_pr, 123);
+                MPI::COMM_WORLD.Ssend(&temp[active_rows_on_proc*total_cols],total_cols,MPI::DOUBLE,down_pr, 123);
             }
 
         }
