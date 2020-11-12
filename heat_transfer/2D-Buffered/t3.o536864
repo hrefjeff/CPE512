@@ -1,0 +1,35 @@
+setting dmc scratch directory
+ 
+============================================================
+=====         Summary of your script job               =====
+============================================================
+  The script file is: 2d_buffer.sh
+  The time limit is 12:00:00 HH:MM:SS.
+  The target directory is: /home/uahcls21/mod2/heat_transfer/2D-Buffered
+  The working directory is:  /scratch-local/uahcls21.t3.536864
+  The memory limit is: 3gb
+  The job will start running after: 2020-11-11T23:09:58
+  Job Name: t3
+  Virtual queue: class
+  QOS: --qos=class
+  Constraints: --constraint=dmc
+  Using  3  cores on master node  dmc5
+  Node list:  dmc5
+  Nodes:  dmc5 dmc5 dmc5
+  Command typed:
+/apps/scripts/run_script 2d_buffer.sh     
+  Queue submit command:
+sbatch --qos=class -J t3 --begin=2020-11-11T23:09:58 --requeue --mail-user=ja0081@uah.edu -o t3.o536864 -t 12:00:00 -N 1-1 -n 3 --mem-per-cpu=1000mb --constraint=dmc 
+Temperature Matrix Including Boundary Points
+   20    20    20    20   100   100   100   100    20    20    20    20 
+   20 23.0366 27.7765 38.0281 65.753 74.2049 74.2049 65.753 38.0281 27.7765 23.0366    20 
+   20 24.3731 30.047 38.5913 50.7889 56.8724 56.8724 50.7889 38.5913 30.047 24.3731    20 
+   20 24.4145 29.4584 35.5168 41.9577 45.644 45.644 41.9577 35.5168 29.4584 24.4145    20 
+   20 23.8346 27.8705 32.0814 35.9069 38.1302 38.1302 35.9069 32.0814 27.8705 23.8346    20 
+   20 23.0629 26.1258 29.0568 31.4886 32.8727 32.8727 31.4886 29.0568 26.1258 23.0629    20 
+   20 22.3012 24.5319 26.5578 28.1502 29.0342 29.0342 28.1502 26.5578 24.5319 22.3012    20 
+   20 21.6196 23.1607 24.5177 25.5504 26.1129 26.1129 25.5504 24.5177 23.1607 21.6196    20 
+   20 21.0244 21.989 22.8235 23.4468 23.7821 23.7821 23.4468 22.8235 21.989 21.0244    20 
+   20 20.495 20.9585 21.3559 21.65 21.8071 21.8071 21.65 21.3559 20.9585 20.495    20 
+   20    20    20    20    20    20    20    20    20    20    20    20 
+Execution Time = 0.000216961 Seconds
