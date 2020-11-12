@@ -1,0 +1,36 @@
+setting dmc scratch directory
+ 
+============================================================
+=====         Summary of your script job               =====
+============================================================
+  The script file is: sendrecv.sh
+  The time limit is 12:00:00 HH:MM:SS.
+  The target directory is: /home/uahcls21/mod2/heat_transfer/2D-Sendrecv
+  The working directory is:  /scratch-local/uahcls21.t2.536940
+  The memory limit is: 2gb
+  The job will start running after: 2020-11-12T11:11:59
+  Job Name: t2
+  Virtual queue: class
+  QOS: --qos=class
+  Constraints: --constraint=dmc
+  Using  2  cores on master node  dmc5
+  Node list:  dmc5
+  Nodes:  dmc5 dmc5
+  Command typed:
+/apps/scripts/run_script sendrecv.sh     
+  Queue submit command:
+sbatch --qos=class -J t2 --begin=2020-11-12T11:11:59 --requeue --mail-user=ja0081@uah.edu -o t2.o536940 -t 12:00:00 -N 1-1 -n 2 --mem-per-cpu=1000mb --constraint=dmc 
+Temperature Matrix Including Boundary Points
+   20    20    20    20   100   100   100   100    20    20    20    20 
+   20 23.0449 27.7923 38.0503 65.7797 74.2339 74.2339 65.7797 38.0503 27.7923 23.0449    20 
+   20 24.3908 30.0811 38.6389 50.8462 56.9348 56.9348 50.8462 38.6389 30.0811 24.3908    20 
+   20 24.4443 29.5155 35.5967 42.0539 45.7487 45.7487 42.0539 35.5967 29.5155 24.4443    20 
+   20 23.8805 27.9585 32.2045 36.0551 38.2915 38.2915 36.0551 32.2045 27.9585 23.8805    20 
+   20 23.1308 26.256 29.2389 31.708 33.1116 33.1116 31.708 29.2389 26.256 23.1308    20 
+   20 22.3992 24.72 26.8211 28.4674 29.3796 29.3796 28.4674 26.8211 24.72 22.3992    20 
+   20 21.7587 23.4279 24.8919 26.0015 26.6042 26.6042 26.0015 24.8919 23.4279 21.7587    20 
+   20 21.2191 22.3633 23.3482 24.08 24.4721 24.4721 24.08 23.3482 22.3633 21.2191    20 
+   20 20.764 21.4766 22.0833 22.529 22.766 22.766 22.529 22.0833 21.4766 20.764    20 
+   20 20.3673 20.7087 20.9979 21.2091 21.3208 21.3208 21.2091 20.9979 20.7087 20.3673    20 
+   20    20    20    20    20    20    20    20    20    20    20    20 
+Execution Time = 0.000183105 Seconds

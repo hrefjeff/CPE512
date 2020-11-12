@@ -100,7 +100,6 @@ void init_temp(void) {
 // 
 void compute_temp() {
     MPI_Status status;
-    MPI_Request req1,req2;
     #define Temp_buf(x,y) temp_buf[(x)*total_cols+y] // *(temp_buf+x*total_cols+y)
     double *temp_buf = new double[total_rows_on_proc*total_cols];
 
@@ -112,25 +111,14 @@ void compute_temp() {
     for (int i=0;i<num_iterations;i++) {
         
         if ( rank < numprocs-1 ) {
-            MPI_Isend(&temp[active_rows_on_proc*total_cols],total_cols,MPI_DOUBLE,down_pr,123,MPI_COMM_WORLD,&req1);
+            MPI_Sendrecv(&temp[active_rows_on_proc*total_cols],total_cols,MPI_DOUBLE,down_pr,123,
+                         &temp[(active_rows_on_proc+1)*total_cols],total_cols,MPI_DOUBLE,down_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
         }
 
-        if ( rank != 0 ) {
-            MPI_Isend(&temp[total_cols],total_cols,MPI_DOUBLE,up_pr,123,MPI_COMM_WORLD,&req2);
+        if ( rank > 0 ) {
+            MPI_Sendrecv(&temp[total_cols],total_cols,MPI_DOUBLE,up_pr,123,
+                         &temp[0],total_cols,MPI_DOUBLE,up_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
         }
-
-        // Receiving and putting into ghost points
-        if ( rank < numprocs-1 ){
-            MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],total_cols,MPI_DOUBLE,down_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-        } 
-
-        if ( rank != 0 ) {
-            MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-        }
-
-        int flg1;
-        if (rank!=numprocs-1) do MPI_Test(&req1,&flg1,&status); while (flg1==0);
-        if (rank!=0) MPI_Wait(&req2, &status);
 
         // End of communication phase
 
