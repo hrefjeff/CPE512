@@ -110,13 +110,18 @@ void compute_temp() {
     // to be replaced with other communication methods in assignment
     // Begin of communication phase
     for (int i=0;i<num_iterations;i++) {
+
+        int r1 = 0;
+        int r2 = 0;
         
         if ( rank < numprocs-1 ) {
             MPI_Isend(&temp[active_rows_on_proc*total_cols],total_cols,MPI_DOUBLE,down_pr,123,MPI_COMM_WORLD,&req1);
+            r1 = 1;
         }
 
         if ( rank != 0 ) {
             MPI_Isend(&temp[total_cols],total_cols,MPI_DOUBLE,up_pr,123,MPI_COMM_WORLD,&req2);
+            r2 = 1;
         }
 
         // Receiving and putting into ghost points
@@ -128,9 +133,8 @@ void compute_temp() {
             MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
         }
 
-        int flg1;
-        if (rank!=numprocs-1) do MPI_Test(&req1,&flg1,&status); while (flg1==0);
-        if (rank!=0) MPI_Wait(&req2, &status);
+        if (r1 == 1) MPI_Wait(&req1, &status);
+        if (r2 == 1) MPI_Wait(&req2, &status);
 
         // End of communication phase
 

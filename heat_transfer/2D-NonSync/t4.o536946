@@ -1,0 +1,34 @@
+setting dmc scratch directory
+ 
+============================================================
+=====         Summary of your script job               =====
+============================================================
+  The script file is: heat.sh
+  The time limit is 12:00:00 HH:MM:SS.
+  The target directory is: /home/uahcls21/mod2/heat_transfer/2D-NonSync
+  The working directory is:  /scratch-local/uahcls21.t4.536946
+  The memory limit is: 4gb
+  The job will start running after: 2020-11-12T11:31:46
+  Job Name: t4
+  Virtual queue: class
+  QOS: --qos=class
+  Constraints: --constraint=dmc
+  Using  4  cores on master node  dmc5
+  Node list:  dmc5
+  Nodes:  dmc5 dmc5 dmc5 dmc5
+  Command typed:
+/apps/scripts/run_script heat.sh     
+  Queue submit command:
+sbatch --qos=class -J t4 --begin=2020-11-12T11:31:46 --requeue --mail-user=ja0081@uah.edu -o t4.o536946 -t 12:00:00 -N 1-1 -n 4 --mem-per-cpu=1000mb --constraint=dmc 
+Temperature Matrix Including Boundary Points
+   20    20    20    20   100   100   100   100    20    20    20    20 
+   20 23.0187 27.742 37.98 65.695 74.1417 74.1417 65.695 37.98 27.742 23.0187    20 
+   20 24.335 29.9738 38.489 50.6657 56.7383 56.7383 50.6657 38.489 29.9738 24.335    20 
+   20 24.3517 29.3377 35.348 41.7543 45.4227 45.4227 41.7543 35.348 29.3377 24.3517    20 
+   20 23.7398 27.6884 31.8266 35.5998 37.7958 37.7958 35.5998 31.8266 27.6884 23.7398    20 
+   20 22.9258 25.8622 28.6878 31.0438 32.3882 32.3882 31.0438 28.6878 25.8622 22.9258    20 
+   20 22.1077 24.1597 26.0362 27.5207 28.3483 28.3483 27.5207 26.0362 24.1597 22.1077    20 
+   20 21.3512 22.6439 23.7921 24.6735 25.1563 25.1563 24.6735 23.7921 22.6439 21.3512    20 
+   20 20.6574 21.2808 21.8264 22.2387 22.4623 22.4623 22.2387 21.8264 21.2808 20.6574    20 
+   20    20    20    20    20    20    20    20    20    20    20    20 
+Execution Time = 0.000242949 Seconds
