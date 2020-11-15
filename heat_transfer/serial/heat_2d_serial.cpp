@@ -1,38 +1,41 @@
 // 2-D Temperature Example base serial code
-// C Version
+// C++ version
+
 /*
-    To compile on dmc.asc.edu (and jetson cluster)
-        GNU Compiler
-            module load gcc/6.1.0_all
-            gcc heat_2d_serial.c -o heat_2d_serial -std=c99 -O3
- 
-          or
- 
-        Intel Compiler on dmc.asc.edu
-            module load intel/15.0.0 
-            icc heat_2d_serial.c -o heat_2d_serial -std=c99 -O3
- 
-   To executed on dmc.asc.edu
-      GNU Compiler
-         run_script heat_2d_loc_blk_MPI_gnu.sh
-         where heat_2d_loc_blk_MPI_gnu.sh is a script file that contains
-            #!/bin/bash
-            module load gcc/6.1.0_all
-            srun ./heat_2d_serial ./ 10000 5 S 
-            # execute a 10000 x 10000 point 2d-heat transfer problem 
-            # for 5 iternations and suppress its output 
-      Intel Compiler
-         run_script heat_2d_loc_blk_MPI_intel.sh
-         where heat_2d_loc_blk_MPI_intel.sh is a script file that contains
-            #!/bin/bash
-            module load intel/15.0.0
-            srun ./heat_2d_serial 10000 5 S 
-            # execute a 10000 x 10000 point 2d-heat transfer problem 
-            # for 5 iternations and suppress its output 
+To compile on dmc.asc.edu
+   GNU Compiler
+      module load gcc/6.1.0_all
+      g++ heat_2d_serial.cpp -o heat_2d_serial -O3
+
+             or
+
+   Intel Compiler
+      module load openmpi/1.10.2-intel-pmi2
+      icpc heat_2d_serial.cpp -o heat_2d_serial -O3
+
+To execute on dmc.asc.edu
+   GNU Compiler
+      run_script heat_2d_serial_gnu.sh
+      where heat_2d_serial_gnu.sh is a script file that contains
+         #!/bin/bash
+         module load gcc/6.1.0_all
+         ./heat_2d_serial 10000 5 S 
+         # execute a 10000 x 10000 point 2d-heat transfer problem 
+         # for 5 iternations and suppress its output 
+   Intel Compiler
+      run_script heat_2d_serial_intel.sh
+      where heat_2d_serial_intel.sh is a script file that contains
+         #!/bin/bash
+         module load openmpi/1.10.2-intel-pmi2
+         ./heat_2d_serial 10000 5 S 
+         # execute a 10000 x 10000 point 2d-heat transfer problem 
+         # for 5 iternations and suppress its output 
 */
 
-#include <stdio.h>
+using namespace std;
 #include <stdlib.h>
+#include <iostream>
+#include <iomanip>
 #include <sys/time.h>
 
 #define TIMER_CLEAR  (tv1.tv_sec = tv1.tv_usec = tv2.tv_sec = tv2.tv_usec = 0)
@@ -108,16 +111,14 @@ void compute_temp() {
 // routine to display temperature values at each point including the 
 // boundary points
 void print_temp(void) {
-    printf("Temperature Matrix Including Boundary Points\n");
+    cout << "Temperature Matrix Including Boundary Points" << endl;
     for (int row=0;row<total_rows;row++) {
         for (int col=0;col<total_cols;col++) {
-            printf("%3.4f ",Temp(row,col));
+            cout << setw(5) << Temp(row,col) << " ";
         }
-        printf("\n");
-        fflush(stdout);
+        cout << endl << flush;
     }
-} 
-
+}
 // Routine that performs a simple 64 integer checksum
 // of the binary contents of the final Temp array
 // This is used to perform a quick comparison of the
@@ -133,13 +134,14 @@ unsigned long long int checksum(void) {
         }
     }
     return sum;
-}
+} 
 
 int main (int argc, char *argv[]){
 
     if (argc!=3 && argc!=4) {
-        printf("Usage: temp2d_serial %s ",argv[0]);
-        printf("[Dim n] [No. Iterations] [Mask Output Flag]\n");
+        cout << "Usage: temp2d_serial " << argv[0] <<
+            " [Dim n] [No. Iterations] [Mask Output Flag]"
+            << endl;
         exit(1);
     }
 
@@ -160,8 +162,8 @@ int main (int argc, char *argv[]){
 
     // dynamically allocate shared memory to
     // temp and temp_buf arrays
-    temp = (double *) malloc(total_rows*total_cols*sizeof(double)); 
-    temp_buf = (double *) malloc(total_rows*total_cols*sizeof(double));
+    temp = new double [total_rows*total_cols]; 
+    temp_buf = new double [total_rows*total_cols];
 
     // initialize temperature matrix
     init_temp();
@@ -175,27 +177,29 @@ int main (int argc, char *argv[]){
 
     // stop timer
     TIMER_STOP;
+
     // print out the results if there is no suppress output argument
     if (argc!=4) {
-        print_temp();
+        print_temp(); 
         // print time in normal human readable format
-        printf("Execution Time = %f Seconds\n", TIMER_ELAPSED);
+        cout << "Execution Time = " << TIMER_ELAPSED << " Seconds"
+             << endl;
     }
     else {
         // print time in gnuplot format
         if (*argv[3]=='G') {
-            printf("%d %f\n",n,TIMER_ELAPSED);
+            cout << n << " " << TIMER_ELAPSED << endl;
         }
         // print 64 bit checksum
         else if (*argv[3]=='C') {
-            printf("64 bit Checksum = %lld\n",checksum());
+            cout << "64 bit Checksum = " << checksum() << endl;
         }
         else
            // print time in normal human readable format
-           printf("Execution Time = %f Seconds\n", TIMER_ELAPSED);
+           cout << "Execution Time = " << TIMER_ELAPSED << " Seconds"
+                << endl;
     }
 
-    free(temp);
-    free(temp_buf);
-
+    delete temp;
+    delete temp_buf;
 }

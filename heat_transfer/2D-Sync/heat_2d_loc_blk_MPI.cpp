@@ -1,54 +1,58 @@
 // 2-D temperature Example with paired Locally Blocking 
 // MPI_Send/MPI_Recv Routines
+
 /*
-    To compile on dmc.asc.edu (and jetson cluster)
-        GNU Compiler
-            module load openmpi/1.10.2-gnu-pmi2
-            mpicc heat_2d_loc_blk_MPI.c -o heat_2d_loc_blk_MPI -O3
- 
-          or
- 
-        Intel Compiler on dmc.asc.edu
-            module load openmpi/1.10.2-intel-pmi2
-            mpicc heat_2d_loc_blk_MPI.c -o heat_2d_loc_blk_MPI -std=c99 -O3
- 
-   To executed on dmc.asc.edu
-      GNU Compiler
-         run_script heat_2d_loc_blk_MPI_gnu.sh
-         where heat_2d_loc_blk_MPI_gnu.sh is a script file that contains
-            #!/bin/bash
-            module load gcc/6.1.0_all
-            srun ./heat_2d_loc_blk_MPI ./ 10000 5 S 
-            # execute a 10000 x 10000 point 2d-heat transfer problem 
-            # for 5 iternations and suppress its output 
-      Intel Compiler
-         run_script heat_2d_loc_blk_MPI_intel.sh
-         where heat_2d_loc_blk_MPI_intel.sh is a script file that contains
-            #!/bin/bash
-            module load openmpi/1.10.2-intel-pmi2
-            srun ./heat_2d_loc_blk_MPI 10000 5 S 
-            # execute a 10000 x 10000 point 2d-heat transfer problem 
-            # for 5 iternations and suppress its output 
+To compile on dmc.asc.edu
+   GNU Compiler
+      module load openmpi/1.10.2-gnu-pmi2
+      mpic++ heat_2d_loc_blk_MPI.cpp -o heat_2d_loc_blk_MPI -O3
+
+         or
+
+   Intel Compiler
+      module load openmpi/1.10.2-intel-pmi2
+      mpic++ heat_2d_loc_blk_MPI.cpp -o heat_2d_loc_blk_MPI -O3
+
+To execute on dmc.asc.edu
+   GNU Compiler
+      run_script heat_2d_loc_blk_MPI_gnu.sh
+      where _gnut_2d_loc_blk_MPI.sh is a script file that contains
+         #!/bin/bash
+         module load gcc/6.1.0_all
+         srun ./heat_2d_loc_blk_MPI 10000 5 S
+         # execute a 10000 x 10000 point 2d-heat transfer problem
+         # for 5 iternations and suppress its output
+   Intel Compiler
+      run_script heat_2d_loc_blk_MPI_intel.sh
+      where heat_2d_loc_blk_MPI_intel.sh is a script file that contains
+         #!/bin/bash
+         module load openmpi/1.10.2-intel-pmi2
+         srun ./heat_2d_loc_blk_MPI 10000 5 S
+         # execute a 10000 x 10000 point 2d-heat transfer problem
+         # for 5 iternations and suppress its output
 */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+#include <iomanip>
 #include <mpi.h>
+
+const int DEBUG = 0;
 
 // Global Constants
 const int ROOM_TEMP=20;       // temperature everywhere except the fireplace
-const int FIREPLACE_TEMP=100; // temperature at upper/right boundary
+const int FIREPLACE_TEMP=100; // temperature at upper/middle boundary
 
 int n;                // number of non boundary condition rows in problem 
 int num_iterations;   // number of successive iterations before terminating
 
 int numprocs,rank;   // number of MPI processes and process ID
-int up_pr;         // logical up processor   
-int down_pr;        // logical down processor
+int up_pr;           // logical up processor   
+int down_pr;         // logical down processor
 
 int active_rows_on_proc; // number of non boundary condition/ghost
                          // point rows on MPI process
-int total_rows_on_proc;  // total number of rows on MPI process
+int total_rows_on_proc;  // total number of rows per MPI process
                           // including boundary condition/ghost
                           // point rows
 
@@ -99,41 +103,42 @@ void init_temp(void) {
 void compute_temp() {
     MPI_Status status;
     #define Temp_buf(x,y) temp_buf[(x)*total_cols+y] // *(temp_buf+x*total_cols+y)
-    double *temp_buf = (double *) malloc(total_rows_on_proc*total_cols*sizeof(double));
+    double *temp_buf = new double[total_rows_on_proc*total_cols];
 
 
     // communication phase using Blocking Receives
 
-    // to be replaced with other communication methods in this assignment 
+    // to be replaced with other communication methods in assignment
     // Begin of communication phase
     for (int i=0;i<num_iterations;i++) {
         if (rank%2==0) { // even numbered processes
-            if (rank<numprocs-1) {
-               MPI_Send(&temp[active_rows_on_proc*total_cols],total_cols,
-                    MPI_DOUBLE,down_pr,123,MPI_COMM_WORLD);
-               MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],
-                    total_cols,MPI_DOUBLE,
-                    down_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+
+            if ( down_pr > numprocs-1 ) { /*  nothing */ } else {
+                MPI_Ssend(&temp[active_rows_on_proc*total_cols],total_cols,
+                        MPI_DOUBLE,down_pr,123,MPI_COMM_WORLD);
+                MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],
+                        total_cols,MPI_DOUBLE,
+                        down_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
             }
             if (rank>0) {
-                MPI_Send(&temp[total_cols],total_cols,MPI_DOUBLE,
+                MPI_Ssend(&temp[total_cols],total_cols,MPI_DOUBLE,
                         up_pr,123,MPI_COMM_WORLD);
                 MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,
                         MPI_ANY_TAG,MPI_COMM_WORLD,&status);
             }
-        }
-        else { // odd numbered processes
-            if (rank >0) {
-               MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,MPI_ANY_TAG,
-                    MPI_COMM_WORLD,&status);
-               MPI_Send(&temp[total_cols],total_cols,MPI_DOUBLE,
-                    up_pr,123,MPI_COMM_WORLD);
+        
+        } else { // odd numbered processes
+            if ( up_pr < 0 ) { /*  nothing */ } else {
+                MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,MPI_ANY_TAG,
+                        MPI_COMM_WORLD,&status);
+                MPI_Ssend(&temp[total_cols],total_cols,MPI_DOUBLE,
+                        up_pr,123,MPI_COMM_WORLD);
             }
             if (rank < numprocs-1) {
                 MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],
                         total_cols,MPI_DOUBLE,down_pr,
                         MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-                MPI_Send(&temp[active_rows_on_proc*total_cols],
+                MPI_Ssend(&temp[active_rows_on_proc*total_cols],
                         total_cols,MPI_DOUBLE,down_pr,
                         123,MPI_COMM_WORLD);
             }
@@ -153,7 +158,7 @@ void compute_temp() {
             }
         }
     }
-    free(temp_buf);
+    delete temp_buf;
 }
 // routine to display temperature values at each point including the 
 // boundary points
@@ -169,22 +174,21 @@ void print_temp(void) {
     else {
         // if rank 0 then go ahead and print header and the upper
         // row of boundary points
-        printf("Temperature Matrix Including Boundary Points\n");
+        std::cout << "Temperature Matrix Including Boundary Points" << std::endl;
         for (int col=0;col<total_cols;col++) {
-            printf("%3.4f ",Temp(0,col));
+            std::cout << std::setw(5) << Temp(0,col) << " ";
         }
-        printf("\n");
-        fflush(stdout);
+        std::cout << std::endl << std::flush;
     }
 
     // when it is your turn print out all points that this process has computed.
     for (int row=1;row<=active_rows_on_proc;row++) {
         for (int col=0;col<total_cols;col++) {
-            printf("%3.4f ",Temp(row,col));
+            std::cout << std::setw(5) << Temp(row,col) << " ";
         }
-        printf("\n");
+        std::cout << std::endl;
     }
-    fflush(stdout);
+    std::cout << std::flush;
 
     // if you are not the last MPI process send a synchronization message to 
     // down most adjacent process to indicate that it is now that processes
@@ -204,15 +208,13 @@ void print_temp(void) {
     else {
         // print out last row of boundary condition points
         for (int col=0;col<total_cols;col++) {
-            printf("%3.4f ",Temp(active_rows_on_proc+1,col));
+            std::cout << std::setw(5) << Temp(active_rows_on_proc+1,col) << " ";
         }
-        printf("\n");
-        fflush(stdout);
+        std::cout << std::endl << std::flush;
         // send synchronization back to root so it can continue
         MPI_Send(&flg,1,MPI_CHAR,0,123,MPI_COMM_WORLD);
     }
 }
-
 // Routine that performs a simple 64 integer checksum
 // of the binary contents of the final Temp array
 // This is used to perform a quick comparison of the
@@ -225,7 +227,7 @@ unsigned long long int checksum(void) {
     double num;
     num_ptr = (unsigned long long int *) &num;
 
-    // wait for turn to compute checksum for portion of
+    // wait for turn to compute checksum for portion of 
     // Temperature data
     if (rank!=0) {
         // if not rank 0 wait until adjacent left process has completed
@@ -240,6 +242,7 @@ unsigned long long int checksum(void) {
             sum += (*num_ptr);
         }
     }
+
     // when it is your turn then go ahead and compute checksum for
     // out all active points that this process is to process
     for (int row=1;row<=active_rows_on_proc;row++) {
@@ -248,11 +251,12 @@ unsigned long long int checksum(void) {
             sum += (*num_ptr);
         }
     }
+
     // if you are not the last MPI process send current checksum which also
-    // serves as a synchronization message to the
+    // serves as a synchronization message to the 
     // down most adjacent process to indicate that it is now that processes
     // turn to send its data. if this is the last process then
-    // the communication is skipped but the lower boundary condition
+    // the communication is skipped but the lower boundary condition 
     // row's checksum is added to the checksum.
     if (rank!=numprocs-1) {
         MPI_Send(&sum,sizeof(double),MPI_CHAR,down_pr,123,MPI_COMM_WORLD);
@@ -270,6 +274,10 @@ unsigned long long int checksum(void) {
         MPI_Send(&sum,sizeof(double),MPI_CHAR,0,123,MPI_COMM_WORLD);
     }
     return sum;
+} 
+
+int iCeil(int x, int y){
+    return (x+y - 1)/ y;
 }
 
 int main (int argc, char *argv[]){
@@ -280,9 +288,9 @@ int main (int argc, char *argv[]){
 
     if (argc!=3 && argc!=4) {
         if (rank==0) {
-            printf("Usage: mpirun -np [No. procs] %s",argv[0]);
-            printf(" [Dim n] [No. Iterations] [Suppress Output]\n");
-            fflush(stdout);
+            std::cout << "Usage: mpirun -np [No. procs] " << argv[0] <<
+                " [Dim n] [No. Iterations] [Suppress Output]"
+                << std::endl;
         }
         MPI_Finalize();
         exit(0);
@@ -303,15 +311,33 @@ int main (int argc, char *argv[]){
     // Warning No Error Checking
     num_iterations = atoi(argv[2]);
 
-    // define the logical right-most MPI process ID
+    // define the logical upper-most MPI process ID
     up_pr = rank-1;
 
-    // define the logical right-most MPI process ID
+    // define the logical down-most MPI process ID
     down_pr = rank+1;
 
     // define the number of rows that the MPI process
     // is to process 
-    active_rows_on_proc = n/numprocs;
+    int ceilVal = iCeil(n,numprocs);
+    if (n % numprocs == 0){
+        active_rows_on_proc = n/numprocs;
+    } else {
+        int ceilVal = iCeil(n,numprocs);
+        if(rank != numprocs-1){
+            
+            active_rows_on_proc = ceilVal;
+
+        } else { // The last proc gets the left over rows
+
+            int leftovers = n;
+            while (leftovers > ceilVal){
+                leftovers -= ceilVal;
+            }
+  
+            active_rows_on_proc = leftovers;
+        }
+    }
 
     // set total rows on MPI process including boundary 
     // points
@@ -322,7 +348,7 @@ int main (int argc, char *argv[]){
 
     // dynamically allocate memory to store the MPI process
     // local temp array
-    temp = (double *) malloc(total_rows_on_proc*total_cols*sizeof(double)); 
+    temp = new double [total_rows_on_proc*total_cols]; 
 
     // initialize MPI processtemperature matrix
     init_temp();
@@ -330,7 +356,7 @@ int main (int argc, char *argv[]){
     MPI_Barrier(MPI_COMM_WORLD);
     double time = MPI_Wtime();
 
-    // compute temperatures returning after specified number 
+    // compute temperatures returning after specified number
     // of iterations
     compute_temp(); 
 
@@ -346,7 +372,8 @@ int main (int argc, char *argv[]){
         print_temp();
         if (rank==0) {
             // print time in normal human readable format
-            printf("Execution Time = %f Seconds\n", parallel_time);
+            std::cout << "Execution Time = " << parallel_time << " Seconds"
+                << std::endl;
         }
     }
 
@@ -356,27 +383,29 @@ int main (int argc, char *argv[]){
         // print time in gnuplot format
         if (*argv[3]=='G') {
             if (rank==0) {
-                printf("%d %f\n", n, parallel_time);
+                std::cout << n << " " << parallel_time << std::endl;
             }
         }
         // print 64 bit checksum
         else if (*argv[3]=='C') {
-            // compute 64 bit data checksum
+            // compute 64 bit data checksum 
             unsigned long long int ck_sum=checksum();
             if (rank==0) {
-                printf("64 bit Checksum = %lld\n",ck_sum);
+                std::cout << "64 bit Checksum = " << ck_sum << std::endl;
             }
         }
         else {
             if (rank==0) {
                 // print time in normal human readable format
-                printf("Execution Time = %f Seconds\n", parallel_time);
+                std::cout << "Execution Time = " << parallel_time << " Seconds"
+                     << std::endl;
             }
         }
     }
-    free(temp);
+    delete temp;
 
     // Terminate MPI Program -- perform necessary MPI housekeeping
     // clear out all buffers, remove handlers, etc.
     MPI_Finalize();
+    return (0);
 }
