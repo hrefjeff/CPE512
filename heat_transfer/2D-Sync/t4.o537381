@@ -6,20 +6,20 @@ setting dmc scratch directory
   The script file is: 2d_sync.sh
   The time limit is 12:00:00 HH:MM:SS.
   The target directory is: /home/uahcls21/mod2/heat_transfer/2D-Sync
-  The working directory is:  /scratch-local/uahcls21.t2.537350
-  The memory limit is: 2gb
-  The job will start running after: 2020-11-14T20:51:42
-  Job Name: t2
+  The working directory is:  /scratch-local/uahcls21.t4.537381
+  The memory limit is: 4gb
+  The job will start running after: 2020-11-15T02:17:31
+  Job Name: t4
   Virtual queue: class
   QOS: --qos=class
   Constraints: --constraint=dmc
-  Using  2  cores on master node  dmc6
+  Using  4  cores on master node  dmc6
   Node list:  dmc6
-  Nodes:  dmc6 dmc6
+  Nodes:  dmc6 dmc6 dmc6 dmc6
   Command typed:
 /apps/scripts/run_script 2d_sync.sh     
   Queue submit command:
-sbatch --qos=class -J t2 --begin=2020-11-14T20:51:42 --requeue --mail-user=ja0081@uah.edu -o t2.o537350 -t 12:00:00 -N 1-1 -n 2 --mem-per-cpu=1000mb --constraint=dmc 
+sbatch --qos=class -J t4 --begin=2020-11-15T02:17:31 --requeue --mail-user=ja0081@uah.edu -o t4.o537381 -t 12:00:00 -N 1-1 -n 4 --mem-per-cpu=1000mb --constraint=dmc 
 Temperature Matrix Including Boundary Points
    20    20    20    20   100   100   100   100    20    20    20    20 
    20 23.0449 27.7923 38.0503 65.7797 74.2339 74.2339 65.7797 38.0503 27.7923 23.0449    20 
@@ -33,4 +33,4 @@ Temperature Matrix Including Boundary Points
    20 20.764 21.4766 22.0833 22.529 22.766 22.766 22.529 22.0833 21.4766 20.764    20 
    20 20.3673 20.7087 20.9979 21.2091 21.3208 21.3208 21.2091 20.9979 20.7087 20.3673    20 
    20    20    20    20    20    20    20    20    20    20    20    20 
-Execution Time = 0.000384808 Seconds
+Execution Time = 0.000746012 Seconds
