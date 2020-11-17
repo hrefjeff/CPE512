@@ -1,0 +1,37 @@
+Q6:
+
+Were there significant differences between its run times and that of your parallel implementation when the number of MPI processes was set to 1?
+
+There was not significant differences between the non-MPI serial program and the 1 process MPI program.
+Looking at the plotted data, it seems as if they are identical.
+Closer inspection on the data files reveals that they only slightly differ in value.
+
+Also was there a case where the parallel version with the number of processes set to 1 executed faster than the serial reference version? 
+
+If so explain why this was possible.Execution times of the first run differed only by 0.005 of a second where the MPI process version
+consistently took longer.
+The reason behind the MPI version taking slightly longer than the non-MPI version
+is because the MPI version still performs all the checks and functionality necessary to create a parallel processing environment.
+The initialize function along with assigning ranks adds time to the entire program during runtime.
+
+
+Q7:
+
+Did the execution time vary from run to run?The times did vary run to run. It seems as though for large amounts of n variability differed the most. What can cause run-time variability in multi-core/multi-process high performance systems that use a job queue?In a multi-core/multi-process environment variability can be caused by the system because it takes extra time to schedule and deschedule cores. It is rare to run more than one thread per core since this is the case.Secondly, a job queue by nature is made to be filled up with a list of tasks to be carried out in turn by an operating system. If the operating system's queue is full there will be resources that aren't available to the program at any given time. When waiting is introduced to the environment the execution time is also slowed down.
+
+
+Q8: 
+
+The speed up value increases as the number of processes increase. The speedup value does appear to be approaching a limit that represents the number of processes performing the the program execution. Since the work is getting divided up into p processes then parallelization of this program introduces a linear speed up. In these program executions we're experiencing the case where Tparallel = Tserial/p.When the program is executed using 8 processes, the speed up is no higher than 8 for larger n. Alternatively the speed up of the 2D synchronous program when the amount of processes is equal to 2 does not rise above 2.
+
+
+Q9:
+
+What happens to efficiency for each case as your data size gets larger?As the data size gets larger the efficiency value approaches 1. Efficiency is defined as the ratio of speedup to the number of processors. In the cases where n is small but being executed with 16 processors, the efficiency is lower because not all the processors are being utilized in an optimal fashion. As n grows the amount of speedup grows because more work can be handled by individual processors.
+
+Q10:
+
+The speedup graphs where n was small and p was large resulted in decreased performance. The reason for this is parallel overhead where the part of the run-time that's due to the additional work that isn't done by the serial program. This mainly consists of communication between processes.
+
+Q11:
+
