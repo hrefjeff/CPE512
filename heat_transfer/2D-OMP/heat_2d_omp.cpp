@@ -5,7 +5,7 @@
 To compile on dmc.asc.edu
     Using GNU Compiler
         module load gcc
-        g++ -fopenmp hello_world_OMP.cpp -o hello_world_OMP_gnu
+        g++ -fopenmp hello_2d_omp.cpp -o heatomp
 
 To execute on dmc.asc.edu
    GNU Compiler
@@ -14,7 +14,7 @@ To execute on dmc.asc.edu
       where heat_2d_openmp.sh is a script file that contains
         #!/bin/bash
         module load pgi/18.1
-        ./heat_2d_openmp 4 10000 5 S
+        ./heatomp 4 10000 5 S
 
         # arg 1 = # of processes
         # arg 2 = # of points 2d-heat transfer problem 
@@ -130,8 +130,8 @@ unsigned long long int checksum(void) {
 int main (int argc, char *argv[]){
 
     if (argc!=3 && argc!=4) {
-        cout << "Usage: temp2d_serial " << argv[0] <<
-            " [Dim n] [No. Iterations] [Mask Output Flag]"
+        cout << "Usage: temp2d_omp " << argv[0] <<
+            " [Theads p] [Dim n] [No. Iterations] [Mask Output Flag]"
             << endl;
         exit(1);
     }
