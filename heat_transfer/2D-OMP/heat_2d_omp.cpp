@@ -3,33 +3,23 @@
 
 /*
 To compile on dmc.asc.edu
-   GNU Compiler
-      module load gcc/6.1.0_all
-      g++ heat_2d_serial.cpp -o heat_2d_serial -O3
-
-             or
-
-   Intel Compiler
-      module load openmpi/1.10.2-intel-pmi2
-      icpc heat_2d_serial.cpp -o heat_2d_serial -O3
+    Using GNU Compiler
+        module load gcc
+        g++ -fopenmp hello_world_OMP.cpp -o hello_world_OMP_gnu
 
 To execute on dmc.asc.edu
    GNU Compiler
-      run_script heat_2d_serial_gnu.sh
-      where heat_2d_serial_gnu.sh is a script file that contains
-         #!/bin/bash
-         module load gcc/6.1.0_all
-         ./heat_2d_serial 10000 5 S 
-         # execute a 10000 x 10000 point 2d-heat transfer problem 
-         # for 5 iternations and suppress its output 
-   Intel Compiler
-      run_script heat_2d_serial_intel.sh
-      where heat_2d_serial_intel.sh is a script file that contains
-         #!/bin/bash
-         module load openmpi/1.10.2-intel-pmi2
-         ./heat_2d_serial 10000 5 S 
-         # execute a 10000 x 10000 point 2d-heat transfer problem 
-         # for 5 iternations and suppress its output 
+      run_script_omp heat_2d_openmp.sh
+      
+      where heat_2d_openmp.sh is a script file that contains
+        #!/bin/bash
+        module load pgi/18.1
+        ./heat_2d_openmp 4 10000 5 S
+
+        # arg 1 = # of processes
+        # arg 2 = # of points 2d-heat transfer problem 
+        # arg 3 = # of iterations
+        # arg 4 (optional) = S for optional suppresion
 */
 
 using namespace std;
