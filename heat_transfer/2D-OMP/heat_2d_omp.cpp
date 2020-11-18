@@ -174,7 +174,7 @@ int main (int argc, char *argv[]){
     TIMER_STOP;
 
     // print out the results if there is no suppress output argument
-    if (argc!=4) {
+    if (argc!=5) {
         print_temp(); 
         // print time in normal human readable format
         cout << "Execution Time = " << TIMER_ELAPSED << " Seconds"
