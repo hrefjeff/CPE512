@@ -5,7 +5,7 @@
 To compile on dmc.asc.edu
     Using GNU Compiler
         module load gcc
-        g++ -fopenmp hello_2d_omp.cpp -o heatomp
+        g++ -fopenmp heat_2d_omp.cpp -o heatomp
 
 To execute on dmc.asc.edu
    GNU Compiler
