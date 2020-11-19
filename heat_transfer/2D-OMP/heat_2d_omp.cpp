@@ -23,6 +23,7 @@ To execute on dmc.asc.edu
 */
 
 using namespace std;
+#include <omp.h>
 #include <stdlib.h>
 #include <iostream>
 #include <iomanip>
