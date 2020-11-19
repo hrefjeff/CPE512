@@ -29,6 +29,7 @@ Compilation on dmc.asc.edu
 
 using namespace std;
 #include <iostream>
+#include <stdlib.h>
 #include <omp.h>
 
 int main (int argc, char *argv[]) {
@@ -37,10 +38,15 @@ int main (int argc, char *argv[]) {
    // thread public (shared) variable nthreads;
    int nthreads;
 
+   // How to set the amount of threads at runtime
+   int p = atoi(argv[1]);
+   omp_set_num_threads(p);
+
    // Fork a team of threads giving them their own
    // copy of private variable, tid, thread id
    #pragma omp parallel 
    {
+
       int tid; // private (local) variable thread id, tid
                // declared within the basic block
 

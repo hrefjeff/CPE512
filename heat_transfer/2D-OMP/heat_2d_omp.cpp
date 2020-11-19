@@ -87,8 +87,7 @@ void compute_temp() {
     for (int i=0;i<num_iterations;i++) {
         for (int j=1;j<=n;j++) {
             for (int k=1;k<=total_cols-2;k++) {
-                Temp_buf(j,k)=0.25*(Temp(j-1,k)+Temp(j+1,k)+
-                        Temp(j,k-1)+Temp(j,k+1));
+                Temp_buf(j,k)=0.25*(Temp(j-1,k)+Temp(j+1,k)+Temp(j,k-1)+Temp(j,k+1));
             }
         }
         for (int j=1;j<=n;j++) {
@@ -136,9 +135,10 @@ int main (int argc, char *argv[]){
         exit(1);
     }
 
-    // get total number of threads to spawn during
+    // get/set total number of threads to spawn during
     // parallel section of the computation
     p = atoi(argv[1]);
+    omp_set_num_threads(p);
 
     // get total number of points not counting boundary points
     // from first command line argument 
