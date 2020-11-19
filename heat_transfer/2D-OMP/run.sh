@@ -1,5 +1,4 @@
 #!/bin/bash
-module load pgi/18.1
 ./heatomp 4 16 20
 
 # arg 1 = # of processes

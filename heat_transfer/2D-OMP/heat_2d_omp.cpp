@@ -141,6 +141,8 @@ int main (int argc, char *argv[]){
     p = atoi(argv[1]);
     omp_set_num_threads(p);
 
+    cout << "Made it here..." << endl;
+
     // get total number of points not counting boundary points
     // from first command line argument 
     // Warning No Error Checking 
@@ -183,11 +185,11 @@ int main (int argc, char *argv[]){
     }
     else {
         // print time in gnuplot format
-        if (*argv[3]=='G') {
+        if (*argv[4]=='G') {
             cout << n << " " << TIMER_ELAPSED << endl;
         }
         // print 64 bit checksum
-        else if (*argv[3]=='C') {
+        else if (*argv[4]=='C') {
             cout << "64 bit Checksum = " << checksum() << endl;
         }
         else
