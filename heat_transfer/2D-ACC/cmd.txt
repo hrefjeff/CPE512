@@ -1,0 +1,20 @@
+Before any compiling using pgc++ or anything, load module:
+
+module load pgi
+
+
+** NOTE: Circular reference shows PGI 18.5 when PGI 20.1 is in path
+The message is an artifact of the installation process but should not affect the operation of your code. You can disregard this message.
+
+
+To run an openmp program:
+
+1) compile it
+
+pgc++ <executable name> -o <file.cpp> -fast
+(e.g. pgc++ heat_2d_serial.cpp -o heat -fast)
+
+Compilation sequence for modified OpenACC using the NVIDIA HPC Compiler:
+
+pgc++ -acc -ta=tesla:cc3+ -Minfo=accel -o heat_2d_acc heat_2d_acc.cpp -fast
+
