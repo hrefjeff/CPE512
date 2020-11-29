@@ -1,29 +1,27 @@
 // 2-D Temperature Example base serial code
-// C++ version
-
+// C Version
 /*
-To compile on dmc.asc.edu
-   GNU Compiler
-      module load pgi
-      pgc++ -acc -ta=tesla:cc3+ -Minfo=accel -o heat_2d_acc heat_2d_acc.cpp -fast
+    To compile on dmc.asc.edu (and jetson cluster)
+        GNU Compiler
+            module load gcc/6.1.0_all
+            gcc heat_2d_serial.c -o heat_2d_serial -std=c99 -O3
+ 
+          or
+ 
+        Intel Compiler on dmc.asc.edu
+            module load intel/15.0.0 
+            icc heat_2d_serial.c -o heat_2d_serial -std=c99 -O3
+ 
+          or
 
-To execute on dmc.asc.edu
-   GNU Compiler
-      run_gpu run.sh
-        #!/bin/bash
-        ./heat_2d_acc 30000 75 C >heat_2d_acc_out.txt
-        ./heat_2d_acc 30000 75 S >heat_2d_acc_out.txt
-
-        # don't forgot toe "chmod 744 run.sh" this file
-        # execute using: run_gpu run.sh
-        # script runs
-        # Enter Queue Name (default <cr>: gpu) class
+        PGI Compiler on dmc.asc.edu
+            module load pgi
+            pgcc heat_2d_serial.c -o heat_2d_serial -std=c99 -fast
+ 
 */
 
-using namespace std;
+#include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
-#include <iomanip>
 #include <sys/time.h>
 
 #define TIMER_CLEAR  (tv1.tv_sec = tv1.tv_usec = tv2.tv_sec = tv2.tv_usec = 0)
@@ -79,7 +77,6 @@ void init_temp(void) {
         }
     }
 }
-
 void compute_temp() {
 
     for (int i=0;i<num_iterations;i++) {
@@ -97,18 +94,18 @@ void compute_temp() {
     }
 
 }
-
 // routine to display temperature values at each point including the 
 // boundary points
 void print_temp(void) {
-    cout << "Temperature Matrix Including Boundary Points" << endl;
+    printf("Temperature Matrix Including Boundary Points\n");
     for (int row=0;row<total_rows;row++) {
         for (int col=0;col<total_cols;col++) {
-            cout << setw(5) << Temp(row,col) << " ";
+            printf("%3.4f ",Temp(row,col));
         }
-        cout << endl << flush;
+        printf("\n");
+        fflush(stdout);
     }
-}
+} 
 
 // Routine that performs a simple 64 integer checksum
 // of the binary contents of the final Temp array
@@ -125,14 +122,13 @@ unsigned long long int checksum(void) {
         }
     }
     return sum;
-} 
+}
 
 int main (int argc, char *argv[]){
 
     if (argc!=3 && argc!=4) {
-        cout << "Usage: temp2d_serial " << argv[0] <<
-            " [Dim n] [No. Iterations] [Mask Output Flag]"
-            << endl;
+        printf("Usage: temp2d_serial %s ",argv[0]);
+        printf("[Dim n] [No. Iterations] [Mask Output Flag]\n");
         exit(1);
     }
 
@@ -153,8 +149,8 @@ int main (int argc, char *argv[]){
 
     // dynamically allocate shared memory to
     // temp and temp_buf arrays
-    temp = new double [total_rows*total_cols]; 
-    temp_buf = new double [total_rows*total_cols];
+    temp = (double *) malloc(total_rows*total_cols*sizeof(double)); 
+    temp_buf = (double *) malloc(total_rows*total_cols*sizeof(double));
 
     // initialize temperature matrix
     init_temp();
@@ -168,29 +164,27 @@ int main (int argc, char *argv[]){
 
     // stop timer
     TIMER_STOP;
-
     // print out the results if there is no suppress output argument
     if (argc!=4) {
-        print_temp(); 
+        print_temp();
         // print time in normal human readable format
-        cout << "Execution Time = " << TIMER_ELAPSED << " Seconds"
-             << endl;
+        printf("Execution Time = %f Seconds\n", TIMER_ELAPSED);
     }
     else {
         // print time in gnuplot format
         if (*argv[3]=='G') {
-            cout << n << " " << TIMER_ELAPSED << endl;
+            printf("%d %f\n",n,TIMER_ELAPSED);
         }
         // print 64 bit checksum
         else if (*argv[3]=='C') {
-            cout << "64 bit Checksum = " << checksum() << endl;
+            printf("64 bit Checksum = %lld\n",checksum());
         }
         else
            // print time in normal human readable format
-           cout << "Execution Time = " << TIMER_ELAPSED << " Seconds"
-                << endl;
+           printf("Execution Time = %f Seconds\n", TIMER_ELAPSED);
     }
 
-    delete temp;
-    delete temp_buf;
+    free(temp);
+    free(temp_buf);
+
 }

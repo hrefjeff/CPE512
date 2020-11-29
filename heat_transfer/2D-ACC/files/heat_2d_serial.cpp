@@ -4,20 +4,21 @@
 /*
 To compile on dmc.asc.edu
    GNU Compiler
+      module load gcc/6.1.0_all
+      g++ heat_2d_serial.cpp -o heat_2d_serial -O3
+
+             or
+
+   Intel Compiler
+      module load openmpi/1.10.2-intel-pmi2
+      icpc heat_2d_serial.cpp -o heat_2d_serial -O3
+
+             or
+
+   NVIDIA HPC  Compiler
       module load pgi
-      pgc++ -acc -ta=tesla:cc3+ -Minfo=accel -o heat_2d_acc heat_2d_acc.cpp -fast
+      pgc++ heat_2d_serial.cpp -o heat_2d_serial -fast
 
-To execute on dmc.asc.edu
-   GNU Compiler
-      run_gpu run.sh
-        #!/bin/bash
-        ./heat_2d_acc 30000 75 C >heat_2d_acc_out.txt
-        ./heat_2d_acc 30000 75 S >heat_2d_acc_out.txt
-
-        # don't forgot toe "chmod 744 run.sh" this file
-        # execute using: run_gpu run.sh
-        # script runs
-        # Enter Queue Name (default <cr>: gpu) class
 */
 
 using namespace std;
@@ -79,7 +80,6 @@ void init_temp(void) {
         }
     }
 }
-
 void compute_temp() {
 
     for (int i=0;i<num_iterations;i++) {
@@ -97,7 +97,6 @@ void compute_temp() {
     }
 
 }
-
 // routine to display temperature values at each point including the 
 // boundary points
 void print_temp(void) {
@@ -109,7 +108,6 @@ void print_temp(void) {
         cout << endl << flush;
     }
 }
-
 // Routine that performs a simple 64 integer checksum
 // of the binary contents of the final Temp array
 // This is used to perform a quick comparison of the
