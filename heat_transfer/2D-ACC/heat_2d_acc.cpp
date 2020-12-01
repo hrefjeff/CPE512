@@ -83,15 +83,22 @@ void init_temp(void) {
 void compute_temp() {
 
     for (int i=0;i<num_iterations;i++) {
-        for (int j=1;j<=n;j++) {
-            for (int k=1;k<=total_cols-2;k++) {
-                Temp_buf(j,k)=0.25*(Temp(j-1,k)+Temp(j+1,k)+
-                        Temp(j,k-1)+Temp(j,k+1));
+
+        #pragma acc parallel
+        {
+            #pragma acc loop
+            for (int j=1;j<=n;j++) {
+                for (int k=1;k<=total_cols-2;k++) {
+                    Temp_buf(j,k)=0.25*(Temp(j-1,k)+Temp(j+1,k)+
+                            Temp(j,k-1)+Temp(j,k+1));
+                }
             }
-        }
-        for (int j=1;j<=n;j++) {
-            for (int k=1;k<=total_cols-2;k++) { 
-                Temp (j,k)=Temp_buf(j,k);
+
+            #pragma acc loop
+            for (int j=1;j<=n;j++) {
+                for (int k=1;k<=total_cols-2;k++) { 
+                    Temp (j,k)=Temp_buf(j,k);
+                }
             }
         }
     }

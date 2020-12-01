@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#include <stddef.h>
 
 // Global Constants
 const int ROOM_TEMP=20;       // temperature everywhere except the fireplace
@@ -270,7 +271,7 @@ unsigned long long int checksum(void) {
 
 int main (int argc, char *argv[]){
 
-    MPI_Init(&argc,&argv); // initalize MPI environment
+    MPI_Init(NULL,NULL); // initalize MPI environment, nothing from command line
     MPI_Comm_size(MPI_COMM_WORLD,&numprocs); // find total number of MPI tasks
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);     // get unique task id number
 
