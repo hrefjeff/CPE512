@@ -6,6 +6,7 @@
 1. https://docs.aws.amazon.com/parallelcluster/latest/ug/tutorials_01_hello_world.html
 1. https://docs.aws.amazon.com/parallelcluster/latest/ug/networking.html#awsbatch-networking
 1. https://slurm.schedmd.com/squeue.html#lbAJ
+1. https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=parallelcluster-finalproject-us-east-1 
 
 ## Topics
 
@@ -13,6 +14,7 @@
 1. AWS Batch
 1. Getting your code onto the 
 1. Script explanation
+1. Cloudwatch logging
 
 ## Open questions
 
