@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
-#include <stddef.h>
 
 // Global Constants
 const int ROOM_TEMP=20;       // temperature everywhere except the fireplace
@@ -271,7 +270,7 @@ unsigned long long int checksum(void) {
 
 int main (int argc, char *argv[]){
 
-    MPI_Init(NULL,NULL); // initalize MPI environment, nothing from command line
+    MPI_Init(&argc,&argv); // initalize MPI environment
     MPI_Comm_size(MPI_COMM_WORLD,&numprocs); // find total number of MPI tasks
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);     // get unique task id number
 
@@ -284,13 +283,11 @@ int main (int argc, char *argv[]){
     // get total number of points not counting boundary points
     // from first command line argument 
     // Warning No Error Checking 
-    //n = atoi(argv[1]);
-    n = 128;
+    n = 16;
 
     // get total number of iterations to run simulation
     // Warning No Error Checking
-    //num_iterations = atoi(argv[2]);
-    num_iterations = 1000;
+    num_iterations = 20;
 
     // define the logical right-most MPI process ID
     up_pr = rank-1;
@@ -329,41 +326,14 @@ int main (int argc, char *argv[]){
     // taking the maximum of the individual MPI process times
     double parallel_time;
     MPI_Reduce(&time,&parallel_time,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
-
-    // print temp array output
-    if (argc!=4) {
-        print_temp();
-        if (rank==0) {
-            // print time in normal human readable format
-            printf("Execution Time = %f Seconds\n", parallel_time);
-        }
-    }
-
-    // // print time or checksum data by itself without temp array output
-    // // print out the results if there is no suppress output argument
-    // if (argc==4) {
-    //     // print time in gnuplot format
-    //     if (*argv[3]=='G') {
-    //         if (rank==0) {
-    //             printf("%d %f\n", n, parallel_time);
-    //         }
-    //     }
-    //     // print 64 bit checksum
-    //     else if (*argv[3]=='C') {
-    //         // compute 64 bit data checksum
-    //         unsigned long long int ck_sum=checksum();
-    //         if (rank==0) {
-    //             printf("64 bit Checksum = %lld\n",ck_sum);
-    //         }
-    //     }
-    //     else {
-            
-    //     }
-    // }
+    
+    print_temp();
+    
     if (rank==0) {
         // print time in normal human readable format
         printf("Execution Time = %f Seconds\n", parallel_time);
     }
+
     free(temp);
 
     // Terminate MPI Program -- perform necessary MPI housekeeping
