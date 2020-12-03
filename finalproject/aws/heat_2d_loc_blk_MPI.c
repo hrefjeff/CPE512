@@ -283,11 +283,20 @@ int main (int argc, char *argv[]){
     // get total number of points not counting boundary points
     // from first command line argument 
     // Warning No Error Checking 
-    n = 16;
+    n = 32;
+    //n = 64;
+    //n = 128;
+    //n = 256;
+    //n = 512;
+    //n = 1024;
+    //n = 2048;
+    //n = 4096;
+    //n = 8192;
+    //n = 10000;
 
     // get total number of iterations to run simulation
     // Warning No Error Checking
-    num_iterations = 20;
+    num_iterations = 50;
 
     // define the logical right-most MPI process ID
     up_pr = rank-1;
