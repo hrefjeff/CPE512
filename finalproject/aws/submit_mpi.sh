@@ -14,10 +14,10 @@ if [[ "${AWS_BATCH_JOB_NODE_INDEX}" -eq  "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" ]]; 
     mkdir -p "${_job_dir}"
 
     echo "Compiling..."
-    /usr/lib64/openmpi/bin/mpicc -o "${_job_dir}/2dtemp" "${_shared_dir}/heat_2d_loc_blk_MPI.c"
+    /usr/lib64/openmpi/bin/mpicc -o "${_job_dir}/temp_loc_blk" "${_shared_dir}/heat_2d_loc_blk_MPI.c"
 
     echo "Running..."
-    /usr/lib64/openmpi/bin/mpirun --mca btl_tcp_if_include eth0 --allow-run-as-root --machinefile "${HOME}/hostfile" "${_job_dir}/2dtemp"
+    /usr/lib64/openmpi/bin/mpirun --mca btl_tcp_if_include eth0 --allow-run-as-root --machinefile "${HOME}/hostfile" "${_job_dir}/temp_loc_blk"
 
     # Write exit status code
     echo "0" > "${_exit_code_file}"

@@ -283,7 +283,7 @@ int main (int argc, char *argv[]){
     // get total number of points not counting boundary points
     // from first command line argument 
     // Warning No Error Checking 
-    n = 32;
+    //n = 32;
     //n = 64;
     //n = 128;
     //n = 256;
@@ -291,7 +291,7 @@ int main (int argc, char *argv[]){
     //n = 1024;
     //n = 2048;
     //n = 4096;
-    //n = 8192;
+    n = 8192;
     //n = 10000;
 
     // get total number of iterations to run simulation
@@ -336,7 +336,7 @@ int main (int argc, char *argv[]){
     double parallel_time;
     MPI_Reduce(&time,&parallel_time,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
     
-    print_temp();
+    //print_temp();
     
     if (rank==0) {
         // print time in normal human readable format
