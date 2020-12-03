@@ -15,6 +15,7 @@
 1. Getting your code onto the 
 1. Script explanation
 1. Cloudwatch logging
+1. What are processes?
 
 ## Open questions
 
