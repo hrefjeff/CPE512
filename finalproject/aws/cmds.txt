@@ -1,0 +1,9 @@
+1. Be sure to copy C file to /shared/
+2. submit job: awsbsub -n <num processors> -cf submit_mpi.sh
+3. monitor by either:
+
+    a) UI: https://console.aws.amazon.com/batch/v2/home?region=us-east-1#dashboard
+    b) Cmd line: awsbstat -d
+
+4. view all jobs: awsbstat -s ALL
+
