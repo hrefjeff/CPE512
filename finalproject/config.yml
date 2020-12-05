@@ -9,12 +9,15 @@ cluster_template = default
 update_check = true
 sanity_check = true
 
-[cluster awsbatch]
+[cluster default]
 key_name = cpe512
 base_os = alinux2
-scheduler = awsbatch
+cluster_type = ondemand
+scheduler = sge
+compute_instance_type = c4.large
 vpc_settings = default
-desired_vcpus = 0
+desired_vcpus = 4
+max_vcpus = 32
 
 [vpc default]
 vpc_id = vpc-04b6a270a5d0390e6
