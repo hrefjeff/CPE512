@@ -23,3 +23,18 @@
 1. How do I monitor my runs
 1. How do I collect billing/cost information associated with runs
 1. 
+
+
+
+
+
+
+
+
+
+# Random resources
+
+1. https://aws.amazon.com/premiumsupport/knowledge-center/batch-job-stuck-runnable-status/
+1. https://docs.aws.amazon.com/parallelcluster/latest/ug/install.html
+1. https://gist.github.com/sean-smith/d29e83b64d7ac3f2195e349447d2dbfe 
+1. 
