@@ -1,4 +1,4 @@
-Before any compiling using pgc++ or anything, load module:
+1. Before any compiling using pgc++ or anything, load module:
 
 module load pgi
 
@@ -6,15 +6,48 @@ module load pgi
 ** NOTE: Circular reference shows PGI 18.5 when PGI 20.1 is in path
 The message is an artifact of the installation process but should not affect the operation of your code. You can disregard this message.
 
+2. compile it
 
-To run an openmp program:
+pgc++ -acc -ta=tesla:cc3+ -Minfo=accel -o <executable name> <file.cpp> -fast
+(e.g. pgc++ -acc -ta=tesla:cc3+ -Minfo=accel -o heat_2d_acc heat_2d_acc.cpp -fast)
 
-1) compile it
+or
 
-pgc++ <executable name> -o <file.cpp> -fast
+pgc++  -o <file.cpp> -fast
 (e.g. pgc++ heat_2d_serial.cpp -o heat -fast)
 
-Compilation sequence for modified OpenACC using the NVIDIA HPC Compiler:
+3. Then create the script file heat_2d_test.sh
 
-pgc++ -acc -ta=tesla:cc3+ -Minfo=accel -o heat_2d_acc heat_2d_acc.cpp -fast
+that contains the following contents
 
+#!/bin/bash
+./heat_2d_acc 30000 75 C >heat_2d_acc_out.txt
+./heat_2d_acc 30000 75 G >>heat_2d_acc_out.txt
+
+4. chmod 744 heat_2d_test.sh 
+
+5. run_gpu heat_2d_test.sh
+
+6. Submit to scheduler.
+
+Select the class queue,
+one (CPU) processor cores,
+10 minutes maximum execution time (00:10:00),
+Memory limit of 16 Gigabytes,
+one GPU,
+and the pascal GPU architecture as shown below:
+
+
+Enter Queue Name (default <cr>: gpu) class
+
+Enter number of processor cores (default <cr>: 1 ) 1
+
+Enter Time Limit (default <cr>: 12:00:00 HH:MM:SS) 00:10:00
+
+Enter memory limit (default <cr>: 1gb ) 16gb
+
+Enter the number of GPUs (default <cr>: 1) 1
+
+Enter GPU architecture [kepler/pascal/volta] (default <cr>: any) pascal
+
+Enter a name for your job (default: heat2dtestshGPU)

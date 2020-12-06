@@ -1,0 +1,3 @@
+uahcls21@dmcvlogin4:2D-ACC> cat heat_2d_acc_out.txt
+Execution Time = 13.8632 Seconds
+64 bit Checksum = 11786280069845114203

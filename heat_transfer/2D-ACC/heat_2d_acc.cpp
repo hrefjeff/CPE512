@@ -46,10 +46,10 @@ int total_rows;       // total number of rows including
 int total_cols;       // total number of columns including
                       // boundary condition columns
 
-double *temp;         // pointer to shared temperature
+double * restrict temp;         // pointer to shared temperature
                       // array row-ordered storage
 
-double *temp_buf;     // next iteration pointer to shared temperature
+double * restrict temp_buf;     // next iteration pointer to shared temperature
                       // array row-ordered storage
 
 // Old style macro to give the illusion of 2D memory
@@ -82,6 +82,7 @@ void init_temp(void) {
 
 void compute_temp() {
 
+    #pragma acc data copy(temp[:total_rows*total_cols]), create(temp_buf[:total_rows*total_cols])
     for (int i=0;i<num_iterations;i++) {
 
         #pragma acc parallel
@@ -136,9 +137,9 @@ unsigned long long int checksum(void) {
 
 int main (int argc, char *argv[]){
 
-    if (argc!=3 && argc!=4) {
+    if (argc!=3) {
         cout << "Usage: temp2d_serial " << argv[0] <<
-            " [Dim n] [No. Iterations] [Mask Output Flag]"
+            " [Dim n] [No. Iterations]"
             << endl;
         exit(1);
     }
@@ -176,27 +177,8 @@ int main (int argc, char *argv[]){
     // stop timer
     TIMER_STOP;
 
-    // print out the results if there is no suppress output argument
-    if (argc!=4) {
-        print_temp(); 
-        // print time in normal human readable format
-        cout << "Execution Time = " << TIMER_ELAPSED << " Seconds"
-             << endl;
-    }
-    else {
-        // print time in gnuplot format
-        if (*argv[3]=='G') {
-            cout << n << " " << TIMER_ELAPSED << endl;
-        }
-        // print 64 bit checksum
-        else if (*argv[3]=='C') {
-            cout << "64 bit Checksum = " << checksum() << endl;
-        }
-        else
-           // print time in normal human readable format
-           cout << "Execution Time = " << TIMER_ELAPSED << " Seconds"
-                << endl;
-    }
+    cout << "Execution Time = " << TIMER_ELAPSED << " Seconds" << endl;
+    cout << "64 bit Checksum = " << checksum() << endl;
 
     delete temp;
     delete temp_buf;
