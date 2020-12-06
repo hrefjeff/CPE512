@@ -14,10 +14,16 @@ key_name = cpe512
 base_os = alinux2
 cluster_type = ondemand
 scheduler = sge
-compute_instance_type = c4.large
+# Regular option
+# compute_instance_type = c4.large
+# Heavy computing option
+compute_instance_type = c5.24xlarge
 vpc_settings = default
 desired_vcpus = 4
-max_vcpus = 32
+# Regular option
+# max_vcpus = 64
+# Heavy computing option
+max_vcpus = 64
 
 [vpc default]
 vpc_id = vpc-04b6a270a5d0390e6
