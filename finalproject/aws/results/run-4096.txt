@@ -1,4 +1,5 @@
-2 procs  : Execution Time = 6.846238 Seconds
-4 procs  : Execution Time = 3.491371 Seconds
-8 procs  : Execution Time = 1.836382 Seconds
-16 procs : Execution Time = 0.934013 Seconds
+2  : Execution Time = 5.587022 Seconds
+4  : Execution Time = 4.106185 Seconds
+8  : Execution Time = 2.787391 Seconds
+16 : Execution Time = 1.581371 Seconds
+
