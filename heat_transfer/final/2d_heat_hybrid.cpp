@@ -5,7 +5,7 @@ To compile on dmc.asc.edu
    
     === Using GNU Compiler ===
     module load openmpi/1.10.2-gnu-pmi2
-    mpic++ -fopenmp hello_world_hybrid.cpp -o hello_hybrid -fopenmp
+    mpic++ heat_2d_hybrid.cpp -o heat_2d_hybrid -fopenmp -Ofast
 
     touch hello_hybrid.sh
 
