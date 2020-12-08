@@ -5,27 +5,19 @@ To compile on dmc.asc.edu
    
     === Using GNU Compiler ===
     module load openmpi/1.10.2-gnu-pmi2
-    mpic++ heat_2d_hybrid.cpp -o heat_2d_hybrid -fopenmp -Ofast
-
-    touch hello_hybrid.sh
+    mpic++ 2d_heat_hybrid.cpp -o heat_2d_hybrid -fopenmp -Ofast
 
 To execute on dmc.asc.edu
-   GNU Compiler
-      run_script heat_2d_loc_blk_MPI_gnu.sh
-      where _gnut_2d_loc_blk_MPI.sh is a script file that contains
-         #!/bin/bash
-         module load gcc/6.1.0_all
-         srun ./heat_2d_loc_blk_MPI 10000 5 S
-         # execute a 10000 x 10000 point 2d-heat transfer problem
-         # for 5 iternations and suppress its output
-   Intel Compiler
-      run_script heat_2d_loc_blk_MPI_intel.sh
-      where heat_2d_loc_blk_MPI_intel.sh is a script file that contains
-         #!/bin/bash
-         module load openmpi/1.10.2-intel-pmi2
-         srun ./heat_2d_loc_blk_MPI 10000 5 S
-         # execute a 10000 x 10000 point 2d-heat transfer problem
-         # for 5 iternations and suppress its output
+
+    touch heat_hybrid.sh
+
+    Add this to heat_hybrid.sh:
+
+    module load gcc
+    ./heat_2d_hybrid 4 2 16 5 S
+
+    run_script_hybrid heat_hybrid.sh
+
 */
 
 #include <omp.h>
@@ -41,7 +33,7 @@ const int ROOM_TEMP=20;       // temperature everywhere except the fireplace
 const int FIREPLACE_TEMP=100; // temperature at upper/middle boundary
 
 int n;                // number of non boundary condition rows in problem
-int p;                // number of threads for OpenMP to spawn in each parallel region
+int t;                // number of threads for OpenMP to spawn in each parallel region
 int num_iterations;   // number of successive iterations before terminating
 
 int numprocs,rank;   // number of MPI processes and process ID
@@ -112,50 +104,59 @@ void compute_temp() {
     
     // Begin of communication phase
     for (int i=0;i<num_iterations;i++) {
-        if (rank%2==0) { // even numbered processes
 
-            if ( down_pr > numprocs-1 ) { /*  nothing */ } else {
-                MPI_Ssend(&temp[active_rows_on_proc*total_cols],total_cols,
-                        MPI_DOUBLE,down_pr,123,MPI_COMM_WORLD);
-                MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],
-                        total_cols,MPI_DOUBLE,
-                        down_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-            }
-            if (rank>0) {
-                MPI_Ssend(&temp[total_cols],total_cols,MPI_DOUBLE,
-                        up_pr,123,MPI_COMM_WORLD);
-                MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,
-                        MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-            }
-        
-        } else { // odd numbered processes
-            if ( up_pr < 0 ) { /*  nothing */ } else {
-                MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,MPI_ANY_TAG,
-                        MPI_COMM_WORLD,&status);
-                MPI_Ssend(&temp[total_cols],total_cols,MPI_DOUBLE,
-                        up_pr,123,MPI_COMM_WORLD);
-            }
-            if (rank < numprocs-1) {
-                MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],
-                        total_cols,MPI_DOUBLE,down_pr,
-                        MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-                MPI_Ssend(&temp[active_rows_on_proc*total_cols],
-                        total_cols,MPI_DOUBLE,down_pr,
-                        123,MPI_COMM_WORLD);
-            }
-        }
-        // End of communication phase
+        #pragma omp parallel 
+        {
 
-        // local stenciled computation phase 
-        for (int j=1;j<=active_rows_on_proc;j++) {
-            for (int k=1;k<=total_cols-2;k++) {
-                Temp_buf(j,k)=0.25*(Temp(j-1,k)+Temp(j+1,k)+
-                        Temp(j,k-1)+Temp(j,k+1));
+            int ID = omp_get_thread_num();
+
+            if (ID == 0){
+                if (rank%2==0) { // even numbered processes
+
+                    if ( down_pr > numprocs-1 ) { /*  nothing */ } else {
+                        MPI_Ssend(&temp[active_rows_on_proc*total_cols],total_cols,
+                                MPI_DOUBLE,down_pr,123,MPI_COMM_WORLD);
+                        MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],
+                                total_cols,MPI_DOUBLE,
+                                down_pr,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+                    }
+                    if (rank>0) {
+                        MPI_Ssend(&temp[total_cols],total_cols,MPI_DOUBLE,
+                                up_pr,123,MPI_COMM_WORLD);
+                        MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,
+                                MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+                    }
+                } else { // odd numbered processes
+                    if ( up_pr < 0 ) { /*  nothing */ } else {
+                        MPI_Recv(&temp[0],total_cols,MPI_DOUBLE,up_pr,MPI_ANY_TAG,
+                                MPI_COMM_WORLD,&status);
+                        MPI_Ssend(&temp[total_cols],total_cols,MPI_DOUBLE,
+                                up_pr,123,MPI_COMM_WORLD);
+                    }
+                    if (rank < numprocs-1) {
+                        MPI_Recv(&temp[(active_rows_on_proc+1)*total_cols],
+                                total_cols,MPI_DOUBLE,down_pr,
+                                MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+                        MPI_Ssend(&temp[active_rows_on_proc*total_cols],
+                                total_cols,MPI_DOUBLE,down_pr,
+                                123,MPI_COMM_WORLD);
+                    }
+                } // End of communication phase
             }
-        }
-        for (int j=1;j<=active_rows_on_proc;j++) {
-            for (int k=1;k<=total_cols-2;k++) { 
-                Temp (j,k)=Temp_buf(j,k);
+
+            // local stenciled computation phase 
+            #pragma omp for
+            for (int j=1;j<=active_rows_on_proc;j++) {
+                for (int k=1;k<=total_cols-2;k++) {
+                    Temp_buf(j,k)=0.25*(Temp(j-1,k)+Temp(j+1,k)+
+                            Temp(j,k-1)+Temp(j,k+1));
+                }
+            }
+            #pragma omp for
+            for (int j=1;j<=active_rows_on_proc;j++) {
+                for (int k=1;k<=total_cols-2;k++) { 
+                    Temp (j,k)=Temp_buf(j,k);
+                }
             }
         }
     }
@@ -287,10 +288,10 @@ int main (int argc, char *argv[]){
     MPI_Comm_size(MPI_COMM_WORLD,&numprocs); // find total number of MPI tasks
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);     // get unique task id number
 
-    if (argc!=3 && argc!=4) {
+    if (argc!=4 && argc!=5) {
         if (rank==0) {
             std::cout << "Usage: mpirun -np [No. procs] " << argv[0] <<
-                " [Dim n] [No. Iterations] [Suppress Output]"
+                " [Threads t] [Dim n] [No. Iterations] [Suppress Output]"
                 << std::endl;
         }
         MPI_Finalize();
@@ -305,8 +306,8 @@ int main (int argc, char *argv[]){
 
     // get/set total number of threads to spawn during
     // parallel section of the computation
-    p = atoi(argv[1]);
-    omp_set_num_threads(p);
+    t = atoi(argv[1]);
+    omp_set_num_threads(t);
 
     // get total number of points not counting boundary points
     // from first command line argument 
