@@ -28,6 +28,7 @@ To execute on dmc.asc.edu
          # for 5 iternations and suppress its output
 */
 
+#include <omp.h>
 #include <stdlib.h>
 #include <iostream>
 #include <iomanip>
@@ -39,7 +40,8 @@ const int DEBUG = 0;
 const int ROOM_TEMP=20;       // temperature everywhere except the fireplace
 const int FIREPLACE_TEMP=100; // temperature at upper/middle boundary
 
-int n;                // number of non boundary condition rows in problem 
+int n;                // number of non boundary condition rows in problem
+int p;                // number of threads for OpenMP to spawn in each parallel region
 int num_iterations;   // number of successive iterations before terminating
 
 int numprocs,rank;   // number of MPI processes and process ID
@@ -298,14 +300,19 @@ int main (int argc, char *argv[]){
     //   active_rows_on_proc,total_rows_on_proc,
     //   total_cols, and temp array   
 
+    // get/set total number of threads to spawn during
+    // parallel section of the computation
+    p = atoi(argv[1]);
+    omp_set_num_threads(p);
+
     // get total number of points not counting boundary points
     // from first command line argument 
     // Warning No Error Checking 
-    n = atoi(argv[1]);
+    n = atoi(argv[2]);
 
     // get total number of iterations to run simulation
     // Warning No Error Checking
-    num_iterations = atoi(argv[2]);
+    num_iterations = atoi(argv[3]);
 
     // define the logical upper-most MPI process ID
     up_pr = rank-1;
@@ -364,7 +371,7 @@ int main (int argc, char *argv[]){
     MPI_Reduce(&time,&parallel_time,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
 
     // print temp array output
-    if (argc!=4) {
+    if (argc!=5) {
         print_temp();
         if (rank==0) {
             // print time in normal human readable format
@@ -375,15 +382,15 @@ int main (int argc, char *argv[]){
 
     // print time or checksum data by itself without temp array output
     // print out the results if there is no suppress output argument
-    if (argc==4) {
+    if (argc==5) {
         // print time in gnuplot format
-        if (*argv[3]=='G') {
+        if (*argv[4]=='G') {
             if (rank==0) {
                 std::cout << n << " " << parallel_time << std::endl;
             }
         }
         // print 64 bit checksum
-        else if (*argv[3]=='C') {
+        else if (*argv[4]=='C') {
             // compute 64 bit data checksum 
             unsigned long long int ck_sum=checksum();
             if (rank==0) {
