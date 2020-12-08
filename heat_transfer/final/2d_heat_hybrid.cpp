@@ -102,9 +102,12 @@ void compute_temp() {
     double *temp_buf = new double[total_rows_on_proc*total_cols];
 
 
-    // communication phase using Blocking Receives
-
-    // to be replaced with other communication methods in assignment
+    /* 
+    Make sure that the the parallel portion of the program incorporates the necessary implicit or explicit synchronizations,
+    to insure that there are no race conditions in the thread code.
+    Also make sure that only one thread per MPI process attempts to execute the MPI communication portion of the routine.
+    */
+    
     // Begin of communication phase
     for (int i=0;i<num_iterations;i++) {
         if (rank%2==0) { // even numbered processes
