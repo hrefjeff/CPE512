@@ -137,20 +137,22 @@ unsigned long long int checksum(void) {
 
 int main (int argc, char *argv[]){
 
-    if (argc!=3 && argc!=4) {
+    /*if (argc!=3 && argc!=4) {
         printf("Usage: temp2d_serial %s ",argv[0]);
         printf("[Dim n] [No. Iterations] [Mask Output Flag]\n");
         exit(1);
-    }
+    }*/
 
     // get total number of points not counting boundary points
     // from first command line argument 
     // Warning No Error Checking 
-    n = atoi(argv[1]);
+    //n = atoi(argv[1]);
+    n = 5000;
 
     // get total number of iterations to run simulation
     // Warning No Error Checking
-    num_iterations = atoi(argv[2]);
+    //num_iterations = atoi(argv[2]);
+    num_iterations = 75;
 
     // set total columns plus boundary points
     total_rows = n+2; // total rows plus boundary points
@@ -177,22 +179,10 @@ int main (int argc, char *argv[]){
     TIMER_STOP;
     // print out the results if there is no suppress output argument
     if (argc!=4) {
-        print_temp();
+        //print_temp();
         // print time in normal human readable format
         printf("Execution Time = %f Seconds\n", TIMER_ELAPSED);
-    }
-    else {
-        // print time in gnuplot format
-        if (*argv[3]=='G') {
-            printf("%d %f\n",n,TIMER_ELAPSED);
-        }
-        // print 64 bit checksum
-        else if (*argv[3]=='C') {
-            printf("64 bit Checksum = %lld\n",checksum());
-        }
-        else
-           // print time in normal human readable format
-           printf("Execution Time = %f Seconds\n", TIMER_ELAPSED);
+        printf("64 bit Checksum = %lld\n",checksum());
     }
 
     free(temp);
